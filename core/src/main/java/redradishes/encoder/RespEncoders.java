@@ -8,7 +8,6 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
@@ -18,8 +17,8 @@ import static redradishes.encoder.ConstExpr.byteConst;
 import static redradishes.encoder.ConstExpr.bytesConst;
 import static redradishes.encoder.ConstExpr.newArg;
 import static redradishes.encoder.ConstExpr.strConst;
-import static redradishes.encoder.Encoder.byteEnc;
 import static redradishes.encoder.Encoder.bytesEnc;
+import static redradishes.encoder.IntEncoder.byteEnc;
 
 class RespEncoders {
   private static final byte[][] NUM_BYTES =
@@ -29,7 +28,7 @@ class RespEncoders {
   private static final ConstExpr CR_LF = bytesConst(new byte[]{'\r', '\n'});
   private static final ConstExpr EMPTY_BULK_STRING = newArg().append(charConst('0')).append(CR_LF).append(CR_LF);
 
-  public static Encoder<Integer> array() {
+  public static IntEncoder array() {
     return charConst('*').append(intEnc()).append(CR_LF);
   }
 
@@ -151,14 +150,14 @@ class RespEncoders {
     })).append(CR_LF);
   }
 
-  private static Encoder<Integer> intEnc() {
-    return Encoder.flatMap(num -> {
+  private static IntEncoder intEnc() {
+    return IntEncoder.flatMap(num -> {
       if (num >= 0 && num <= 9) {
-        return byteEnc().map(i -> (byte) ('0' + i));
+        return byteEnc().mapToIntEncoder(i -> '0' + i);
       } else if (num >= 10 && num <= 99) {
-        return bytesEnc().map(i -> NUM_BYTES[i - 10]);
+        return bytesEnc().mapToIntEncoder(i -> NUM_BYTES[i - 10]);
       } else {
-        return bytesEnc().map((Function<Integer, byte[]>) RespEncoders::toBytes);
+        return bytesEnc().mapToIntEncoder(RespEncoders::toBytes);
       }
     });
   }

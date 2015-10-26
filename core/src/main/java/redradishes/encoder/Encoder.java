@@ -1,6 +1,7 @@
 package redradishes.encoder;
 
 import java.util.function.Function;
+import java.util.function.IntFunction;
 
 public interface Encoder<T> extends EncoderBase<Encoder<T>> {
   ConstExpr encode(T val);
@@ -27,8 +28,8 @@ public interface Encoder<T> extends EncoderBase<Encoder<T>> {
     return val -> Encoder.this.encode(mapper.apply(val));
   }
 
-  static Encoder<Byte> byteEnc() {
-    return ConstExpr::byteConst;
+  default IntEncoder mapToIntEncoder(IntFunction<? extends T> mapper) {
+    return val -> Encoder.this.encode(mapper.apply(val));
   }
 
   static Encoder<byte[]> bytesEnc() {
