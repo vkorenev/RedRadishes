@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
 import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -50,12 +49,11 @@ class RedisClientConnection {
     });
     sourceChannel.resumeReads();
     ByteBufferBundle byteBufferBundle = new ByteBufferBundle(bufferPool);
-    CharsetEncoder charsetEncoder = charset.newEncoder();
     this.outChannel = connection.getSinkChannel();
     this.outChannel.getWriteSetter().set(outChannel -> {
       try {
         while (!commandsQueue.isEmpty() || !byteBufferBundle.isEmpty()) {
-          ByteSink sink = new ByteBufferSink(byteBufferBundle, charsetEncoder);
+          ByteSink sink = new ByteBufferSink(byteBufferBundle);
           CommandEncoderDecoder command;
           while (byteBufferBundle.allocSize() <= 1 && (command = commandsQueue.poll()) != null) {
             decoderQueue.add(command);

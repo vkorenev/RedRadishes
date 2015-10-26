@@ -34,10 +34,10 @@ public class RespEncodersTest {
       {0, 1, 9, 10, 99, 100, 100, -1, -9, -10, -99, -100, Long.MAX_VALUE, Long.MIN_VALUE};
 
   @Theory
-  public void testArray(@ForAll int i, Charset charset) {
+  public void testArray(@ForAll int i) {
     ConstExpr c = RespEncoders.array().encode(i);
     assertEquals(0, c.size());
-    assertThat(serialize(c, charset), equalTo(String.format("*%d\r\n", i).getBytes(US_ASCII)));
+    assertThat(serialize(c), equalTo(String.format("*%d\r\n", i).getBytes(US_ASCII)));
   }
 
   @Theory
@@ -50,30 +50,30 @@ public class RespEncodersTest {
     ConstExpr c = RespEncoders.strBulkString(charset.newEncoder()).encode(s);
     assertEquals(1, c.size());
     byte[] bytes = s.getBytes(charset);
-    assertThat(serialize(c, charset), equalTo(respBulkString(bytes)));
+    assertThat(serialize(c), equalTo(respBulkString(bytes)));
   }
 
   @Theory
-  public void testBytesBulkString(@ForAll byte[] bytes, Charset charset) {
+  public void testBytesBulkString(@ForAll byte[] bytes) {
     ConstExpr c = RespEncoders.bytesBulkString().encode(bytes);
     assertEquals(1, c.size());
-    assertThat(serialize(c, charset), equalTo(respBulkString(bytes)));
+    assertThat(serialize(c), equalTo(respBulkString(bytes)));
   }
 
   @Theory
-  public void testIntBulkString(int i, Charset charset) {
+  public void testIntBulkString(int i) {
     ConstExpr c = RespEncoders.intBulkString().encode(i);
     assertEquals(1, c.size());
     String s = Integer.toString(i);
-    assertThat(serialize(c, charset), equalTo(String.format("$%d\r\n%s\r\n", s.length(), s).getBytes(US_ASCII)));
+    assertThat(serialize(c), equalTo(String.format("$%d\r\n%s\r\n", s.length(), s).getBytes(US_ASCII)));
   }
 
   @Theory
-  public void testLongBulkString(long i, Charset charset) {
+  public void testLongBulkString(long i) {
     ConstExpr c = RespEncoders.longBulkString().encode(i);
     assertEquals(1, c.size());
     String s = Long.toString(i);
-    assertThat(serialize(c, charset), equalTo(String.format("$%d\r\n%s\r\n", s.length(), s).getBytes(US_ASCII)));
+    assertThat(serialize(c), equalTo(String.format("$%d\r\n%s\r\n", s.length(), s).getBytes(US_ASCII)));
   }
 
   @Theory

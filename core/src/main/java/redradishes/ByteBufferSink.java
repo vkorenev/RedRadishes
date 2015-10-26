@@ -10,12 +10,10 @@ import java.nio.charset.CoderResult;
 
 class ByteBufferSink implements ByteSink {
   private final ByteBufferBundle byteBufferBundle;
-  private final CharsetEncoder charsetEncoder;
   private ByteBuffer buffer;
 
-  ByteBufferSink(ByteBufferBundle byteBufferBundle, CharsetEncoder charsetEncoder) {
+  ByteBufferSink(ByteBufferBundle byteBufferBundle) {
     this.byteBufferBundle = byteBufferBundle;
-    this.charsetEncoder = charsetEncoder;
     this.buffer = this.byteBufferBundle.get();
   }
 
@@ -28,9 +26,10 @@ class ByteBufferSink implements ByteSink {
   }
 
   @Override
-  public void write(CharSequence s) {
+  public void write(CharSequence s, CharsetEncoder charsetEncoder) {
     CharBuffer in = CharBuffer.wrap(s);
     try {
+      charsetEncoder.reset();
       while (true) {
         CoderResult coderResult = in.hasRemaining() ? charsetEncoder.encode(in, buffer, true) : CoderResult.UNDERFLOW;
         if (coderResult.isUnderflow()) {
@@ -46,8 +45,6 @@ class ByteBufferSink implements ByteSink {
       }
     } catch (CharacterCodingException e) {
       throw new UncheckedCharacterCodingException(e);
-    } finally {
-      charsetEncoder.reset();
     }
   }
 

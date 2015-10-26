@@ -77,16 +77,12 @@ class RespEncoders {
     int maxLength = (int) (s.length() * (double) charsetEncoder.maxBytesPerChar());
     ByteBuffer byteBuffer = ByteBuffer.allocate(maxLength);
     CharBuffer charBuffer = CharBuffer.wrap(s);
-    try {
-      CoderResult coderResult = charsetEncoder.encode(charBuffer, byteBuffer, true);
-      if (coderResult.isUnderflow()) {
-        coderResult = charsetEncoder.flush(byteBuffer);
-      }
-      if (!coderResult.isUnderflow()) {
-        coderResult.throwException();
-      }
-    } finally {
-      charsetEncoder.reset();
+    CoderResult coderResult = charsetEncoder.reset().encode(charBuffer, byteBuffer, true);
+    if (coderResult.isUnderflow()) {
+      coderResult = charsetEncoder.flush(byteBuffer);
+    }
+    if (!coderResult.isUnderflow()) {
+      coderResult.throwException();
     }
     byteBuffer.flip();
     return byteBuffer;
