@@ -3,13 +3,11 @@ package redradishes.encoder;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 
-import java.nio.charset.Charset;
-
 import static java.nio.charset.StandardCharsets.US_ASCII;
 
 class TestUtil {
-  static byte[] serialize(ConstExpr c, Charset charset) {
-    ByteArraySink byteArraySink = new ByteArraySink(charset.newEncoder());
+  static byte[] serialize(ConstExpr c) {
+    ByteArraySink byteArraySink = new ByteArraySink();
     c.writeTo(byteArraySink);
     return byteArraySink.geBytes();
   }

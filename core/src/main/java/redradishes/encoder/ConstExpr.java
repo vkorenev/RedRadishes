@@ -51,7 +51,7 @@ public interface ConstExpr {
   }
 
   static ConstExpr strConst(CharSequence s, CharsetEncoder charsetEncoder) {
-    return byteSink -> byteSink.write(s);
+    return byteSink -> byteSink.write(s, charsetEncoder);
   }
 
   static ConstExpr combine(ConstExpr c1, ConstExpr c2) {

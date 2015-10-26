@@ -11,11 +11,6 @@ import java.nio.charset.CharsetEncoder;
 
 class ByteArraySink implements ByteSink {
   private final ByteArrayDataOutput out = ByteStreams.newDataOutput();
-  private final CharsetEncoder charsetEncoder;
-
-  ByteArraySink(CharsetEncoder charsetEncoder) {
-    this.charsetEncoder = charsetEncoder;
-  }
 
   @Override
   public void write(byte b) {
@@ -23,7 +18,7 @@ class ByteArraySink implements ByteSink {
   }
 
   @Override
-  public void write(CharSequence s) {
+  public void write(CharSequence s, CharsetEncoder charsetEncoder) {
     try {
       ByteBuffer byteBuffer = charsetEncoder.encode(CharBuffer.wrap(s));
       out.write(byteBuffer.array(), 0, byteBuffer.remaining());
