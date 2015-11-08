@@ -13,12 +13,12 @@ import java.util.stream.LongStream;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static redradishes.encoder.ConstExpr.NEW_ARG;
 import static redradishes.encoder.ConstExpr.byteConst;
 import static redradishes.encoder.ConstExpr.bytesConst;
-import static redradishes.encoder.ConstExpr.newArg;
-import static redradishes.encoder.ConstExpr.strConst;
 import static redradishes.encoder.Encoder.bytesEnc;
-import static redradishes.encoder.IntEncoder.byteEnc;
+import static redradishes.encoder.Encoder.stringEnc;
+import static redradishes.encoder.IntEncoder.digitEncoder;
 
 class RespEncoders {
   private static final byte[][] NUM_BYTES =
@@ -26,7 +26,9 @@ class RespEncoders {
   private static final byte[] MIN_LONG_BYTES = "-9223372036854775808".getBytes(US_ASCII);
   private static final long[] SIZE_TABLE = LongStream.iterate(10, x -> x * 10).limit(18).map(x -> x - 1).toArray();
   private static final ConstExpr CR_LF = bytesConst(new byte[]{'\r', '\n'});
-  private static final ConstExpr EMPTY_BULK_STRING = newArg().append(charConst('0')).append(CR_LF).append(CR_LF);
+  public static final ConstExpr MIN_LONG_BULK_STRING =
+      charConst('2').append(charConst('0')).append(CR_LF).append(bytesConst(MIN_LONG_BYTES)).compact();
+  private static final ConstExpr EMPTY_BULK_STRING = charConst('0').append(CR_LF).compact();
 
   public static IntEncoder array() {
     return charConst('*').append(intEnc()).append(CR_LF);
@@ -38,42 +40,31 @@ class RespEncoders {
 
   public static Encoder<CharSequence> strBulkString(CharsetEncoder charsetEncoder) {
     if (UTF_8.equals(charsetEncoder.charset())) {
-      return Encoder.flatMap(s -> {
-        if (s.length() == 0) {
-          return EMPTY_BULK_STRING.constEnc();
-        } else {
-          return newArg().append(intEnc().map(Utf8::encodedLength)).append(CR_LF).append(strConst(s, charsetEncoder))
-              .append(CR_LF);
-        }
-      });
+      return NEW_ARG.append(Encoder.choiceConst(s -> s.length() == 0, EMPTY_BULK_STRING,
+          intEnc().map(Utf8::encodedLength).append(CR_LF).zip(stringEnc(charsetEncoder)))).append(CR_LF);
     } else if (charsetEncoder.maxBytesPerChar() == 1.0) {
-      return Encoder.flatMap(s -> {
-        if (s.length() == 0) {
-          return EMPTY_BULK_STRING.constEnc();
-        } else {
-          return newArg().append(intEnc().map(CharSequence::length)).append(CR_LF).append(strConst(s, charsetEncoder))
-              .append(CR_LF);
-        }
-      });
+      return NEW_ARG.append(Encoder.choiceConst(s -> s.length() == 0, EMPTY_BULK_STRING,
+          intEnc().map(CharSequence::length).append(CR_LF).zip(stringEnc(charsetEncoder)))).append(CR_LF);
     } else {
-      return Encoder.flatMap(s -> {
+      return NEW_ARG.append((Encoder<CharSequence>) s -> {
         if (s.length() == 0) {
-          return EMPTY_BULK_STRING.constEnc();
+          return EMPTY_BULK_STRING;
         } else {
           try {
-            ByteBuffer byteBuffer = encode(s, charsetEncoder);
+            ByteBuffer byteBuffer = encodeCharSeq(s, charsetEncoder);
             int encodedLength = byteBuffer.remaining();
-            return newArg().append(intEnc().encode(encodedLength).<CharSequence>constEnc()).append(CR_LF)
-                .append(bytesConst(byteBuffer.array(), 0, encodedLength)).append(CR_LF);
+            return intEnc().encode(encodedLength).append(CR_LF)
+                .append(bytesConst(byteBuffer.array(), 0, encodedLength));
           } catch (CharacterCodingException e) {
             throw new UncheckedCharacterCodingException(e);
           }
         }
-      });
+      }).append(CR_LF);
     }
   }
 
-  private static ByteBuffer encode(CharSequence s, CharsetEncoder charsetEncoder) throws CharacterCodingException {
+  private static ByteBuffer encodeCharSeq(CharSequence s, CharsetEncoder charsetEncoder)
+      throws CharacterCodingException {
     int maxLength = (int) (s.length() * (double) charsetEncoder.maxBytesPerChar());
     ByteBuffer byteBuffer = ByteBuffer.allocate(maxLength);
     CharBuffer charBuffer = CharBuffer.wrap(s);
@@ -89,7 +80,7 @@ class RespEncoders {
   }
 
   public static Encoder<byte[]> bytesBulkString() {
-    return newArg().append(arrayLenEnc()).append(CR_LF).zip(bytesEnc()).append(CR_LF);
+    return NEW_ARG.append(arrayLenEnc()).append(CR_LF).zip(bytesEnc()).append(CR_LF);
   }
 
   private static Encoder<byte[]> arrayLenEnc() {
@@ -97,65 +88,42 @@ class RespEncoders {
   }
 
   public static Encoder<Integer> intBulkString() {
-    return Encoder.flatMap(num -> {
-      if (num >= 0 && num <= 9) {
-        return oneDigitAsBulkString();
-      } else if (num >= 10 && num <= 99) {
-        return twoDigitsAsBulkString();
-      } else {
-        return longAsBulkString().map(Integer::longValue);
-      }
-    });
+    return NEW_ARG.append(IntEncoder.choice(num -> num >= 0 && num <= 9, oneDigitAsBulkString(), IntEncoder
+        .choice(num -> num >= 10 && num <= 99, twoDigitsAsBulkString(),
+            longAsBulkString().mapToIntEncoder(Long::valueOf))).map(Integer::intValue)).append(CR_LF);
   }
 
   public static Encoder<Long> longBulkString() {
-    return Encoder.flatMap(num -> {
-      if (num >= 0 && num <= 9) {
-        return oneDigitAsBulkString().map(Long::intValue);
-      } else if (num >= 10 && num <= 99) {
-        return twoDigitsAsBulkString().map(Long::intValue);
-      } else if (num == Long.MIN_VALUE) {
-        return minLongAsBulkString().constEnc();
-      } else {
-        return longAsBulkString();
-      }
-    });
-  }
-
-  private static Encoder<Integer> oneDigitAsBulkString() {
-    return newArg().append(charConst('1')).append(CR_LF).append(byteEnc().map((Integer num) -> (byte) ('0' + num)))
+    return NEW_ARG.append(Encoder.choice(num -> num >= 0 && num <= 9, oneDigitAsBulkString().map(Long::intValue),
+        Encoder.choice(num -> num >= 10 && num <= 99, twoDigitsAsBulkString().map(Long::intValue),
+            Encoder.choiceConst(num -> num == Long.MIN_VALUE, MIN_LONG_BULK_STRING, longAsBulkString()))))
         .append(CR_LF);
   }
 
-  private static Encoder<Integer> twoDigitsAsBulkString() {
-    return newArg().append(charConst('2')).append(CR_LF).append(bytesEnc().map((Integer num) -> NUM_BYTES[num - 10]))
-        .append(CR_LF);
+  private static IntEncoder oneDigitAsBulkString() {
+    return charConst('1').append(CR_LF).append(digitEncoder());
   }
 
-  private static ConstExpr minLongAsBulkString() {
-    return newArg().append(charConst('2')).append(charConst('0')).append(CR_LF).append(bytesConst(MIN_LONG_BYTES))
-        .append(CR_LF);
+  private static IntEncoder twoDigitsAsBulkString() {
+    return charConst('2').append(CR_LF).append(bytesEnc().mapToIntEncoder(num -> NUM_BYTES[num - 10]));
   }
 
   private static Encoder<Long> longAsBulkString() {
-    return newArg().append(Encoder.flatMap((Long num) -> {
+    return num -> {
       byte[] bytes = toBytes(num);
       int len = bytes.length;
       return (len <= 9 ? byteConst((byte) ('0' + len)) : bytesConst(NUM_BYTES[len - 10])).append(CR_LF)
-          .append(bytesConst(bytes)).constEnc();
-    })).append(CR_LF);
+          .append(bytesConst(bytes));
+    };
   }
 
   private static IntEncoder intEnc() {
-    return IntEncoder.flatMap(num -> {
-      if (num >= 0 && num <= 9) {
-        return byteEnc().mapToIntEncoder(i -> '0' + i);
-      } else if (num >= 10 && num <= 99) {
-        return bytesEnc().mapToIntEncoder(i -> NUM_BYTES[i - 10]);
-      } else {
-        return bytesEnc().mapToIntEncoder(RespEncoders::toBytes);
+    return num -> {
+      if (num >= 0 && num <= 9) { return byteConst((byte) ('0' + num)); } else if (num >= 10 && num <= 99) {
+        return bytesConst(NUM_BYTES[num - 10]);
       }
-    });
+      return bytesConst(toBytes(num));
+    };
   }
 
   static byte[] toBytes(long num) {

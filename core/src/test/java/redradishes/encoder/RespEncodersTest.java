@@ -2,6 +2,7 @@ package redradishes.encoder;
 
 import com.pholser.junit.quickcheck.ForAll;
 import com.pholser.junit.quickcheck.From;
+import com.pholser.junit.quickcheck.generator.ValuesOf;
 import com.pholser.junit.quickcheck.generator.java.lang.Encoded;
 import com.pholser.junit.quickcheck.generator.java.lang.Encoded.InCharset;
 import org.junit.contrib.theories.DataPoints;
@@ -34,43 +35,49 @@ public class RespEncodersTest {
       {0, 1, 9, 10, 99, 100, 100, -1, -9, -10, -99, -100, Long.MAX_VALUE, Long.MIN_VALUE};
 
   @Theory
-  public void testArray(@ForAll int i) {
-    ConstExpr c = RespEncoders.array().encode(i);
+  public void testArray(@ForAll int i, @ForAll @ValuesOf boolean compact) {
+    ConstExpr expr = RespEncoders.array().encode(i);
+    ConstExpr c = compact ? expr.compact() : expr;
     assertEquals(0, c.size());
     assertThat(serialize(c), equalTo(String.format("*%d\r\n", i).getBytes(US_ASCII)));
   }
 
   @Theory
-  public void testOneByteCharsetStrBulkString(@ForAll @From(Encoded.class) @InCharset("ISO-8859-1") String s) {
-    testStrBulkString(s, ISO_8859_1);
+  public void testOneByteCharsetStrBulkString(@ForAll @From(Encoded.class) @InCharset("ISO-8859-1") String s,
+      @ForAll @ValuesOf boolean compact) {
+    testStrBulkString(s, ISO_8859_1, compact);
   }
 
   @Theory
-  public void testStrBulkString(@ForAll String s, Charset charset) {
-    ConstExpr c = RespEncoders.strBulkString(charset.newEncoder()).encode(s);
+  public void testStrBulkString(@ForAll String s, Charset charset, @ForAll @ValuesOf boolean compact) {
+    ConstExpr expr = RespEncoders.strBulkString(charset.newEncoder()).encode(s);
+    ConstExpr c = compact ? expr.compact() : expr;
     assertEquals(1, c.size());
     byte[] bytes = s.getBytes(charset);
     assertThat(serialize(c), equalTo(respBulkString(bytes)));
   }
 
   @Theory
-  public void testBytesBulkString(@ForAll byte[] bytes) {
-    ConstExpr c = RespEncoders.bytesBulkString().encode(bytes);
+  public void testBytesBulkString(@ForAll byte[] bytes, @ForAll @ValuesOf boolean compact) {
+    ConstExpr expr = RespEncoders.bytesBulkString().encode(bytes);
+    ConstExpr c = compact ? expr.compact() : expr;
     assertEquals(1, c.size());
     assertThat(serialize(c), equalTo(respBulkString(bytes)));
   }
 
   @Theory
-  public void testIntBulkString(int i) {
-    ConstExpr c = RespEncoders.intBulkString().encode(i);
+  public void testIntBulkString(int i, @ForAll @ValuesOf boolean compact) {
+    ConstExpr expr = RespEncoders.intBulkString().encode(i);
+    ConstExpr c = compact ? expr.compact() : expr;
     assertEquals(1, c.size());
     String s = Integer.toString(i);
     assertThat(serialize(c), equalTo(String.format("$%d\r\n%s\r\n", s.length(), s).getBytes(US_ASCII)));
   }
 
   @Theory
-  public void testLongBulkString(long i) {
-    ConstExpr c = RespEncoders.longBulkString().encode(i);
+  public void testLongBulkString(long i, @ForAll @ValuesOf boolean compact) {
+    ConstExpr expr = RespEncoders.longBulkString().encode(i);
+    ConstExpr c = compact ? expr.compact() : expr;
     assertEquals(1, c.size());
     String s = Long.toString(i);
     assertThat(serialize(c), equalTo(String.format("$%d\r\n%s\r\n", s.length(), s).getBytes(US_ASCII)));
