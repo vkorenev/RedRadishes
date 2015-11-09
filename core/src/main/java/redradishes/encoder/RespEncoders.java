@@ -20,7 +20,7 @@ import static redradishes.encoder.Encoder.bytesEnc;
 import static redradishes.encoder.Encoder.stringEnc;
 import static redradishes.encoder.IntEncoder.digitEncoder;
 
-class RespEncoders {
+public class RespEncoders {
   private static final byte[][] NUM_BYTES =
       IntStream.rangeClosed(10, 99).mapToObj(i -> Integer.toString(i).getBytes(US_ASCII)).toArray(byte[][]::new);
   private static final byte[] MIN_LONG_BYTES = "-9223372036854775808".getBytes(US_ASCII);
