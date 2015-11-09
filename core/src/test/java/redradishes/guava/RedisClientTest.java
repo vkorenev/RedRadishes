@@ -9,10 +9,10 @@ import redradishes.CommandList;
 import redradishes.CommandPair;
 import redradishes.RedisException;
 import redradishes.Request;
-import redradishes.encoder.Command;
-import redradishes.encoder.Command1;
-import redradishes.encoder.Command2;
-import redradishes.encoder.Command3;
+import redradishes.commands.Command;
+import redradishes.commands.Command1;
+import redradishes.commands.Command2;
+import redradishes.commands.Command3;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -39,6 +39,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static redradishes.commands.CommandBuilder.command;
 import static redradishes.decoder.ArrayBuilders.array;
 import static redradishes.decoder.ArrayBuilders.collection;
 import static redradishes.decoder.BulkStringBuilders._long;
@@ -53,7 +54,6 @@ import static redradishes.decoder.Replies.integerReply;
 import static redradishes.decoder.Replies.longReply;
 import static redradishes.decoder.Replies.mapReply;
 import static redradishes.decoder.Replies.simpleStringReply;
-import static redradishes.encoder.Commands.define;
 import static redradishes.encoder.Encoders.arrayArg;
 import static redradishes.encoder.Encoders.bytesArg;
 import static redradishes.encoder.Encoders.collArg;
@@ -67,59 +67,70 @@ import static redradishes.hamcrest.HasSameContentAs.hasSameContentAs;
 public class RedisClientTest {
   private RedisClientFactory factory;
   private RedisClient redisClient;
-  public static final Command1<CharSequence[], Integer> DEL = define(integerReply(), "DEL", arrayArg(strArg(UTF_8)));
-  public static final Command<CharSequence> PING = define(simpleStringReply(), "PING");
-  public static final Command<CharSequence> FLUSHDB = define(simpleStringReply(), "FLUSHDB");
+  public static final Command1<CharSequence[], Integer> DEL =
+      command("DEL").withArgument(arrayArg(strArg(UTF_8))).returning(integerReply());
+  public static final Command<CharSequence> PING = command("PING").returning(simpleStringReply());
+  public static final Command<CharSequence> FLUSHDB = command("FLUSHDB").returning(simpleStringReply());
   public static final Command1<CharSequence, CharSequence> ECHO =
-      define(bulkStringReply(charSequence()), "ECHO", strArg(UTF_8));
-  public static final Command1<CharSequence, byte[]> GET = define(bulkStringReply(byteArray()), "GET", strArg(UTF_8));
+      command("ECHO").withArgument(strArg(UTF_8)).returning(bulkStringReply(charSequence()));
+  public static final Command1<CharSequence, byte[]> GET =
+      command("GET").withArgument(strArg(UTF_8)).returning(bulkStringReply(byteArray()));
   public static final Command1<CharSequence, List<CharSequence>> HKEYS =
-      define(arrayReply(collection(ArrayList::new), charSequence()), "HKEYS", strArg(UTF_8));
+      command("HKEYS").withArgument(strArg(UTF_8)).returning(arrayReply(collection(ArrayList::new), charSequence()));
   public static final Command1<CharSequence, CharSequence[]> HKEYS_A =
-      define(arrayReply(array(CharSequence[]::new), charSequence()), "HKEYS", strArg(UTF_8));
+      command("HKEYS").withArgument(strArg(UTF_8)).returning(arrayReply(array(CharSequence[]::new), charSequence()));
   public static final Command1<CharSequence, Map<String, CharSequence>> HGETALL =
-      define(mapReply(map(HashMap::new), string(), charSequence()), "HGETALL", strArg(UTF_8));
-  public static final Command1<CharSequence, Integer> HLEN = define(integerReply(), "HLEN", strArg(UTF_8));
+      command("HGETALL").withArgument(strArg(UTF_8)).returning(mapReply(map(HashMap::new), string(), charSequence()));
+  public static final Command1<CharSequence, Integer> HLEN =
+      command("HLEN").withArgument(strArg(UTF_8)).returning(integerReply());
   public static final Command1<CharSequence, Set<Long>> SMEMBERS =
-      define(arrayReply(collection(HashSet::new), _long()), "SMEMBERS", strArg(UTF_8));
+      command("SMEMBERS").withArgument(strArg(UTF_8)).returning(arrayReply(collection(HashSet::new), _long()));
   public static final Command1<CharSequence, List<Integer>> SMEMBERS_INTEGER_LIST =
-      define(arrayReply(collection(ArrayList::new), integer()), "SMEMBERS", strArg(UTF_8));
+      command("SMEMBERS").withArgument(strArg(UTF_8)).returning(arrayReply(collection(ArrayList::new), integer()));
   public static final Command2<CharSequence, CharSequence[], Integer> HDEL =
-      define(integerReply(), "HDEL", strArg(UTF_8), arrayArg(strArg(UTF_8)));
+      command("HDEL").withArgument(strArg(UTF_8)).withArgument(arrayArg(strArg(UTF_8))).returning(integerReply());
   public static final Command2<CharSequence, CharSequence, CharSequence> HGET =
-      define(bulkStringReply(charSequence()), "HGET", strArg(UTF_8), strArg(UTF_8));
+      command("HGET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8))
+          .returning(bulkStringReply(charSequence()));
   public static final Command2<CharSequence, CharSequence, byte[]> HGET_BYTES =
-      define(bulkStringReply(byteArray()), "HGET", strArg(UTF_8), strArg(UTF_8));
+      command("HGET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).returning(bulkStringReply(byteArray()));
   public static final Command2<CharSequence, CharSequence, Long> HGET_LONG =
-      define(bulkStringReply(_long()), "HGET", strArg(UTF_8), strArg(UTF_8));
+      command("HGET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).returning(bulkStringReply(_long()));
   public static final Command2<CharSequence, CharSequence[], List<CharSequence>> HMGET =
-      define(arrayReply(collection(ArrayList::new), charSequence()), "HMGET", strArg(UTF_8), arrayArg(strArg(UTF_8)));
-  public static final Command2<CharSequence, Collection<? extends CharSequence>, List<CharSequence>> HMGET2 =
-      define(arrayReply(collection(ArrayList::new), charSequence()), "HMGET", strArg(UTF_8), collArg(strArg(UTF_8)));
-  public static final Command2<CharSequence, Map<? extends String, ? extends CharSequence>, CharSequence> HMSET =
-      define(simpleStringReply(), "HMSET", strArg(UTF_8), mapArg(strArg(UTF_8), strArg(UTF_8)));
-  public static final Command2<CharSequence, Collection<? extends Long>, Integer> SADD =
-      define(integerReply(), "SADD", strArg(UTF_8), collArg(longArg()));
+      command("HMGET").withArgument(strArg(UTF_8)).withArgument(arrayArg(strArg(UTF_8)))
+          .returning(arrayReply(collection(ArrayList::new), charSequence()));
+  public static final Command2<CharSequence, Collection<CharSequence>, List<CharSequence>> HMGET2 =
+      command("HMGET").withArgument(strArg(UTF_8)).withArgument(collArg(strArg(UTF_8)))
+          .returning(arrayReply(collection(ArrayList::new), charSequence()));
+  public static final Command2<CharSequence, Map<String, CharSequence>, CharSequence> HMSET =
+      command("HMSET").withArgument(strArg(UTF_8)).withArgument(mapArg(strArg(UTF_8), strArg(UTF_8)))
+          .returning(simpleStringReply());
+  public static final Command2<CharSequence, Collection<Long>, Integer> SADD =
+      command("SADD").withArgument(strArg(UTF_8)).withArgument(collArg(longArg())).returning(integerReply());
   public static final Command2<CharSequence, long[], Integer> SADD_LONG_ARR =
-      define(integerReply(), "SADD", strArg(UTF_8), longArrayArg());
+      command("SADD").withArgument(strArg(UTF_8)).withArgument(longArrayArg()).returning(integerReply());
   public static final Command2<CharSequence, int[], Integer> SADD_INT_ARR =
-      define(integerReply(), "SADD", strArg(UTF_8), intArrayArg());
+      command("SADD").withArgument(strArg(UTF_8)).withArgument(intArrayArg()).returning(integerReply());
   public static final Command2<CharSequence, CharSequence, CharSequence> SET =
-      define(simpleStringReply(), "SET", strArg(UTF_8), strArg(UTF_8));
+      command("SET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).returning(simpleStringReply());
   public static final Command2<CharSequence, byte[], CharSequence> SET_BYTES =
-      define(simpleStringReply(), "SET", strArg(UTF_8), bytesArg());
+      command("SET").withArgument(strArg(UTF_8)).withArgument(bytesArg()).returning(simpleStringReply());
   public static final Command2<CharSequence, Long, CharSequence> SET_LONG =
-      define(simpleStringReply(), "SET", strArg(UTF_8), longArg());
+      command("SET").withArgument(strArg(UTF_8)).withArgument(longArg()).returning(simpleStringReply());
   public static final Command2<CharSequence, byte[], Integer> SETNX =
-      define(integerReply(), "SETNX", strArg(UTF_8), bytesArg());
+      command("SETNX").withArgument(strArg(UTF_8)).withArgument(bytesArg()).returning(integerReply());
   public static final Command3<CharSequence, CharSequence, CharSequence, Integer> HSET =
-      define(integerReply(), "HSET", strArg(UTF_8), strArg(UTF_8), strArg(UTF_8));
+      command("HSET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8))
+          .returning(integerReply());
   public static final Command3<CharSequence, CharSequence, byte[], Integer> HSET_BYTES =
-      define(integerReply(), "HSET", strArg(UTF_8), strArg(UTF_8), bytesArg());
+      command("HSET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).withArgument(bytesArg())
+          .returning(integerReply());
   public static final Command3<CharSequence, CharSequence, Long, Integer> HSET_LONG =
-      define(integerReply(), "HSET", strArg(UTF_8), strArg(UTF_8), longArg());
+      command("HSET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).withArgument(longArg())
+          .returning(integerReply());
   public static final Command3<CharSequence, CharSequence, Long, Long> HINCRBY =
-      define(longReply(), "HINCRBY", strArg(UTF_8), strArg(UTF_8), longArg());
+      command("HINCRBY").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).withArgument(longArg())
+          .returning(longReply());
 
   @Before
   public void openConnection() throws Exception {

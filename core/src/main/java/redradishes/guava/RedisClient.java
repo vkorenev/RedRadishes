@@ -8,9 +8,9 @@ import org.xnio.Pool;
 import org.xnio.StreamConnection;
 import redradishes.Request;
 import redradishes.XnioRedisClient;
-import redradishes.encoder.Command1;
-import redradishes.encoder.Command2;
-import redradishes.encoder.Command3;
+import redradishes.commands.Command1;
+import redradishes.commands.Command2;
+import redradishes.commands.Command3;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
