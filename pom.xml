@@ -37,6 +37,7 @@
   </ciManagement>
   <modules>
     <module>core</module>
+    <module>benchmark</module>
   </modules>
   <prerequisites>
     <maven>3.0.4</maven>
