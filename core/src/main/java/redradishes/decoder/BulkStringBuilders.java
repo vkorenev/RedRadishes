@@ -8,39 +8,32 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CoderResult;
 
 public class BulkStringBuilders {
-  private static final BulkStringBuilderFactory<byte[]> BYTE_ARRAY_BUILDER_FACTORY = (length, charsetDecoder) -> {
-    byte[] bytes = new byte[length];
-    return new BulkStringBuilderFactory.Builder<byte[]>() {
-      int offset = 0;
+  private static final BulkStringBuilderFactory<byte[]> BYTE_ARRAY_BUILDER_FACTORY =
+      (length, charsetDecoder) -> new BulkStringBuilderFactory.Builder<byte[]>() {
+        private final byte[] bytes = new byte[length];
+        private int offset = 0;
 
-      @Override
-      public void append(ByteBuffer buffer) {
-        int len = buffer.remaining();
-        buffer.get(bytes, offset, len);
-        offset += len;
-      }
+        @Override
+        public void append(ByteBuffer buffer) {
+          int len = buffer.remaining();
+          buffer.get(bytes, offset, len);
+          offset += len;
+        }
 
-      @Override
-      public void appendLast(ByteBuffer buffer) {
-        append(buffer);
-      }
+        @Override
+        public void appendLast(ByteBuffer buffer) {
+          append(buffer);
+        }
 
-      @Override
-      public byte[] build() {
-        return bytes;
-      }
-    };
-  };
-  private static final BulkStringBuilderFactory<CharSequence> CHAR_SEQUENCE_BUILDER_FACTORY = charSequence();
-  private static final BulkStringBuilderFactory<Integer> INTEGER_BUILDER_FACTORY =
-      CHAR_SEQUENCE_BUILDER_FACTORY.map(Object::toString).map(Integer::valueOf);
-  private static final BulkStringBuilderFactory<Long> LONG_BUILDER_FACTORY =
-      CHAR_SEQUENCE_BUILDER_FACTORY.map(Object::toString).map(Long::valueOf);
+        @Override
+        public byte[] build() {
+          return bytes;
+        }
+      };
+  private static final BulkStringBuilderFactory<CharSequence> CHAR_SEQUENCE_BUILDER_FACTORY =
+      (length, charsetDecoder) -> new BulkStringBuilderFactory.Builder<CharSequence>() {
+        private final CharBuffer charBuffer = CharBuffer.allocate((int) (length * charsetDecoder.maxCharsPerByte()));
 
-  public static BulkStringBuilderFactory<CharSequence> charSequence() {
-    return (length, charsetDecoder) -> {
-      CharBuffer charBuffer = CharBuffer.allocate((int) (length * charsetDecoder.maxCharsPerByte()));
-      return new BulkStringBuilderFactory.Builder<CharSequence>() {
         @Override
         public void append(ByteBuffer buffer) {
           checkResult(charsetDecoder.decode(buffer, charBuffer, false));
@@ -69,11 +62,17 @@ public class BulkStringBuilders {
           }
         }
       };
-    };
+  private static final BulkStringBuilderFactory<Integer> INTEGER_BUILDER_FACTORY =
+      CHAR_SEQUENCE_BUILDER_FACTORY.map(Object::toString).map(Integer::valueOf);
+  private static final BulkStringBuilderFactory<Long> LONG_BUILDER_FACTORY =
+      CHAR_SEQUENCE_BUILDER_FACTORY.map(Object::toString).map(Long::valueOf);
+
+  public static BulkStringBuilderFactory<CharSequence> charSequence() {
+    return CHAR_SEQUENCE_BUILDER_FACTORY;
   }
 
   public static BulkStringBuilderFactory<String> string() {
-    return charSequence().map(Object::toString);
+    return CHAR_SEQUENCE_BUILDER_FACTORY.map(Object::toString);
   }
 
   public static BulkStringBuilderFactory<Integer> integer() {
