@@ -69,7 +69,7 @@ public class ByteBufferBundleTest {
     consumer.accept(dest);
   }
 
-  private void write(byte[] message, ByteBufferBundle byteBufferBundle, @TestedOn(ints = {7, 10}) int writeChunk) {
+  private void write(byte[] message, ByteBufferBundle byteBufferBundle, int writeChunk) {
     int bytesWritten = 0;
     ByteBuffer buffer = byteBufferBundle.get();
     int remaining;
