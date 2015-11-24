@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-import redradishes.decoder.BulkStringBuilderFactory;
+import redradishes.decoder.TestBulkStringBuilderFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
@@ -32,32 +32,7 @@ public class BulkStringParserTest {
 
   @Theory
   public void parses(@ForAll byte[] bytes, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
-    Parser<byte[]> parser = new BulkStringParser<>(bytes.length,
-        (length, charsetDecoder) -> new BulkStringBuilderFactory.Builder<byte[]>() {
-          private final byte[] bytes = new byte[length];
-          private int offset = 0;
-          private boolean finalized = false;
-
-          @Override
-          public void append(ByteBuffer buffer) {
-            if (finalized) throw new IllegalStateException();
-            int len = buffer.remaining();
-            buffer.get(bytes, offset, len);
-            offset += len;
-          }
-
-          @Override
-          public void appendLast(ByteBuffer buffer) {
-            append(buffer);
-            finalized = true;
-          }
-
-          @Override
-          public byte[] build() {
-            if (!finalized) throw new IllegalStateException();
-            return bytes;
-          }
-        });
+    Parser<byte[]> parser = new BulkStringParser<>(bytes.length, new TestBulkStringBuilderFactory());
     Iterator<ByteBuffer> chunks = split(appendCRLF(bytes), bufferSize);
     assertThat(parse(chunks, parser, Function.identity(), charsetDecoder), equalTo(bytes));
     verifyZeroInteractions(charsetDecoder);
