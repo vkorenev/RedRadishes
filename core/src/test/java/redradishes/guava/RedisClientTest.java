@@ -131,6 +131,11 @@ public class RedisClientTest {
   public static final Command3<CharSequence, CharSequence, Long, Long> HINCRBY =
       command("HINCRBY").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).withArgument(longArg())
           .returning(longReply());
+  public static final Command3<? super CharSequence, Long, CharSequence, Integer> ZADD =
+      command("ZADD").withArgument(strArg(UTF_8)).withArgument(longArg()).withArgument(strArg(UTF_8))
+          .returning(integerReply());
+  public static final Command2<CharSequence, CharSequence, Integer> ZRANK =
+      command("ZRANK").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).returning(integerReply());
 
   @Before
   public void openConnection() throws Exception {
@@ -371,5 +376,15 @@ public class RedisClientTest {
     int val2 = 20;
     assertThat(redisClient.send(SADD_INT_ARR, key, new int[]{val1, val2}).get(), equalTo(2));
     assertThat(redisClient.send(SMEMBERS_INTEGER_LIST, key).get(), containsInAnyOrder(val1, val2));
+  }
+
+  @Test
+  public void sortedSet() throws Exception {
+    String key = "Z_KEY_1";
+    String member1 = "MEMBER_1";
+    String member2 = "MEMBER_2";
+    assertThat(redisClient.send(ZADD, key, 3L, member1).get(), equalTo(1));
+    assertThat(redisClient.send(ZRANK, key, member1).get(), equalTo(0));
+    assertThat(redisClient.send(ZRANK, key, member2).get(), nullValue());
   }
 }
