@@ -36,7 +36,7 @@ public class Replies {
   }
 
   public static <T> BulkStringReplyParser<T> bulkStringReply(BulkStringBuilderFactory<? extends T> builderFactory) {
-    return new BulkStringReplyParser<>(new LenParser<>(len -> new BulkStringParser<>(len, builderFactory)));
+    return new BulkStringReplyParser<>(len -> new BulkStringParser<>(len, builderFactory));
   }
 
   private static <T> Parser<T> bulkStringReplyNoFail(BulkStringBuilderFactory<? extends T> builderFactory) {
@@ -46,7 +46,7 @@ public class Replies {
   public static <E, T> ArrayReplyParser<T> arrayReply(ArrayBuilderFactory<E, ? extends T> arrayBuilderFactory,
       BulkStringBuilderFactory<? extends E> elementBuilderFactory) {
     Parser<E> elementParser = bulkStringReplyNoFail(elementBuilderFactory);
-    return new ArrayReplyParser<>(new LenParser<>(len -> new ArrayParser<>(len, arrayBuilderFactory, elementParser)));
+    return new ArrayReplyParser<>(len -> new ArrayParser<>(len, arrayBuilderFactory, elementParser));
   }
 
   public static <K, V, T> ArrayReplyParser<T> mapReply(MapBuilderFactory<K, V, ? extends T> arrayBuilderFactory,
@@ -54,7 +54,6 @@ public class Replies {
       BulkStringBuilderFactory<? extends V> valueBuilderFactory) {
     SeqParser<K, V> kvParser =
         SeqParser.seq(bulkStringReplyNoFail(keyBuilderFactory), bulkStringReplyNoFail(valueBuilderFactory));
-    return new ArrayReplyParser<>(
-        new LenParser<>(len -> new ArrayAsMapParser<>(len / 2, arrayBuilderFactory, kvParser)));
+    return new ArrayReplyParser<>(len -> new ArrayAsMapParser<>(len / 2, arrayBuilderFactory, kvParser));
   }
 }
