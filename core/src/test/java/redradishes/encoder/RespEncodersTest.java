@@ -50,7 +50,7 @@ public class RespEncodersTest {
 
   @Theory
   public void testStrBulkString(@ForAll String s, Charset charset, @ForAll @ValuesOf boolean compact) {
-    ConstExpr expr = RespEncoders.strBulkString(charset.newEncoder()).encode(s);
+    ConstExpr expr = RespEncoders.strBulkString(charset).encode(s);
     ConstExpr c = compact ? expr.compact() : expr;
     assertEquals(1, c.size());
     byte[] bytes = s.getBytes(charset);

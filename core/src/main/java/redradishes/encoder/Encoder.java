@@ -1,6 +1,6 @@
 package redradishes.encoder;
 
-import java.nio.charset.CharsetEncoder;
+import java.nio.charset.Charset;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
@@ -88,8 +88,8 @@ public interface Encoder<T> extends EncoderBase<Encoder<T>> {
     return ConstExpr::bytesConst;
   }
 
-  static Encoder<CharSequence> stringEnc(CharsetEncoder charsetEncoder) {
-    return val -> ConstExpr.strConst(val, charsetEncoder);
+  static Encoder<CharSequence> stringEnc(Charset charset) {
+    return val -> ConstExpr.strConst(val, charset);
   }
 
   static <T> Encoder<T> choice(Predicate<T> predicate, Encoder<T> then, Encoder<T> otherwise) {

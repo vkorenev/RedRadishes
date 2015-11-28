@@ -11,8 +11,9 @@ import static redradishes.encoder.RespEncoders.longBulkString;
 import static redradishes.encoder.RespEncoders.strBulkString;
 
 public class Encoders {
+
   public static Encoder<CharSequence> strArg(Charset charset) {
-    return strBulkString(charset.newEncoder());
+    return strBulkString(charset);
   }
 
   public static Encoder<Long> longArg() {
