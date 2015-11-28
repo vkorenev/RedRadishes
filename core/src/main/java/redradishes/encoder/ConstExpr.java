@@ -7,9 +7,11 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static redradishes.encoder.RespEncoders.getCharsetEncoder;
 
 public interface ConstExpr {
   ConstExpr EMPTY = new ConstExpr() {
@@ -123,29 +125,32 @@ public interface ConstExpr {
     };
   }
 
-  static ConstExpr strConst(CharSequence s, CharsetEncoder charsetEncoder) {
+  static ConstExpr strConst(CharSequence s, Charset charset) {
     return new ConstExpr() {
       @Override
       public int length() {
-        if (UTF_8.equals(charsetEncoder.charset())) {
-          return Utf8.encodedLength(s);
-        } else if (charsetEncoder.maxBytesPerChar() == 1.0) {
-          return s.length();
-        } else if (s.length() == 0) {
+        if (s.length() == 0) {
           return 0;
+        } else if (UTF_8.equals(charset)) {
+          return Utf8.encodedLength(s);
         } else {
-          CharBuffer charBuffer = CharBuffer.wrap(s);
-          try {
-            return charsetEncoder.encode(charBuffer).remaining();
-          } catch (CharacterCodingException e) {
-            throw new UncheckedCharacterCodingException(e);
+          CharsetEncoder charsetEncoder = getCharsetEncoder(charset);
+          if (charsetEncoder.maxBytesPerChar() == 1.0) {
+            return s.length();
+          } else {
+            CharBuffer charBuffer = CharBuffer.wrap(s);
+            try {
+              return charsetEncoder.encode(charBuffer).remaining();
+            } catch (CharacterCodingException e) {
+              throw new UncheckedCharacterCodingException(e);
+            }
           }
         }
       }
 
       @Override
       public void writeTo(ByteSink byteSink) {
-        byteSink.write(s, charsetEncoder);
+        byteSink.write(s, getCharsetEncoder(charset));
       }
 
       @Override
@@ -156,7 +161,7 @@ public interface ConstExpr {
       @Override
       public ConstExpr compact() {
         try {
-          ByteBuffer byteBuffer = charsetEncoder.encode(CharBuffer.wrap(s));
+          ByteBuffer byteBuffer = getCharsetEncoder(charset).encode(CharBuffer.wrap(s));
           return bytesConst(byteBuffer.array(), 0, byteBuffer.remaining());
         } catch (CharacterCodingException e) {
           throw new UncheckedCharacterCodingException(e);

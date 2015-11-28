@@ -6,8 +6,11 @@ import redradishes.UncheckedCharacterCodingException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
@@ -29,6 +32,13 @@ public class RespEncoders {
   public static final ConstExpr MIN_LONG_BULK_STRING =
       charConst('2').append(charConst('0')).append(CR_LF).append(bytesConst(MIN_LONG_BYTES)).compact();
   private static final ConstExpr EMPTY_BULK_STRING = charConst('0').append(CR_LF).compact();
+  private static final ThreadLocal<Map<Charset, CharsetEncoder>> charsetDecodersMap =
+      new ThreadLocal<Map<Charset, CharsetEncoder>>() {
+        @Override
+        protected Map<Charset, CharsetEncoder> initialValue() {
+          return new WeakHashMap<>();
+        }
+      };
 
   public static IntEncoder array() {
     return charConst('*').append(intEnc()).append(CR_LF);
@@ -38,29 +48,36 @@ public class RespEncoders {
     return byteConst((byte) c);
   }
 
-  public static Encoder<CharSequence> strBulkString(CharsetEncoder charsetEncoder) {
-    if (UTF_8.equals(charsetEncoder.charset())) {
+  public static Encoder<CharSequence> strBulkString(Charset charset) {
+    if (UTF_8.equals(charset)) {
       return NEW_ARG.append(Encoder.choiceConst(s -> s.length() == 0, EMPTY_BULK_STRING,
-          intEnc().map(Utf8::encodedLength).append(CR_LF).zip(stringEnc(charsetEncoder)))).append(CR_LF);
-    } else if (charsetEncoder.maxBytesPerChar() == 1.0) {
-      return NEW_ARG.append(Encoder.choiceConst(s -> s.length() == 0, EMPTY_BULK_STRING,
-          intEnc().map(CharSequence::length).append(CR_LF).zip(stringEnc(charsetEncoder)))).append(CR_LF);
+          intEnc().map(Utf8::encodedLength).append(CR_LF).zip(stringEnc(charset)))).append(CR_LF);
     } else {
-      return NEW_ARG.append((Encoder<CharSequence>) s -> {
-        if (s.length() == 0) {
-          return EMPTY_BULK_STRING;
-        } else {
-          try {
-            ByteBuffer byteBuffer = encodeCharSeq(s, charsetEncoder);
-            int encodedLength = byteBuffer.remaining();
-            return intEnc().encode(encodedLength).append(CR_LF)
-                .append(bytesConst(byteBuffer.array(), 0, encodedLength));
-          } catch (CharacterCodingException e) {
-            throw new UncheckedCharacterCodingException(e);
+      CharsetEncoder charsetEncoder = getCharsetEncoder(charset);
+      if (charsetEncoder.maxBytesPerChar() == 1.0) {
+        return NEW_ARG.append(Encoder.choiceConst(s -> s.length() == 0, EMPTY_BULK_STRING,
+            intEnc().map(CharSequence::length).append(CR_LF).zip(stringEnc(charset)))).append(CR_LF);
+      } else {
+        return NEW_ARG.append((Encoder<CharSequence>) s -> {
+          if (s.length() == 0) {
+            return EMPTY_BULK_STRING;
+          } else {
+            try {
+              ByteBuffer byteBuffer = encodeCharSeq(s, charsetEncoder);
+              int encodedLength = byteBuffer.remaining();
+              return intEnc().encode(encodedLength).append(CR_LF)
+                  .append(bytesConst(byteBuffer.array(), 0, encodedLength));
+            } catch (CharacterCodingException e) {
+              throw new UncheckedCharacterCodingException(e);
+            }
           }
-        }
-      }).append(CR_LF);
+        }).append(CR_LF);
+      }
     }
+  }
+
+  static CharsetEncoder getCharsetEncoder(Charset charset) {
+    return charsetDecodersMap.get().computeIfAbsent(charset, Charset::newEncoder);
   }
 
   private static ByteBuffer encodeCharSeq(CharSequence s, CharsetEncoder charsetEncoder)
