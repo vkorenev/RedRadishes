@@ -20,7 +20,7 @@ public class CommandBuilder {
       }
 
       @Override
-      public <T> CommandBuilder1<T> withArgument(Encoder<T> encoder) {
+      public <T> CommandBuilder1<T> withArg(Encoder<T> encoder) {
         return cb1(constExpr.append(encoder));
       }
 
@@ -39,7 +39,7 @@ public class CommandBuilder {
       }
 
       @Override
-      public <T> CommandBuilder2<T1, T> withArgument(Encoder<T> enc) {
+      public <T> CommandBuilder2<T1, T> withArg(Encoder<T> enc) {
         return cb2(encoder.append(enc));
       }
 
@@ -59,7 +59,7 @@ public class CommandBuilder {
       }
 
       @Override
-      public <T> CommandBuilder3<T1, T2, T> withArgument(Encoder<T> enc) {
+      public <T> CommandBuilder3<T1, T2, T> withArg(Encoder<T> enc) {
         return cb3(encoder.append(enc));
       }
 
@@ -126,19 +126,19 @@ public class CommandBuilder {
   }
 
   public interface CommandBuilder0 extends CommandBuilderBase<CommandBuilder0> {
-    <T> CommandBuilder1<? super T> withArgument(Encoder<T> encoder);
+    <T> CommandBuilder1<? super T> withArg(Encoder<T> encoder);
 
     <R> Command<R> returning(ReplyParser<? extends R> parser);
   }
 
   public interface CommandBuilder1<T1> extends CommandBuilderBase<CommandBuilder1<T1>> {
-    <T> CommandBuilder2<T1, T> withArgument(Encoder<T> encoder);
+    <T> CommandBuilder2<T1, T> withArg(Encoder<T> encoder);
 
     <U1 extends T1, R> Command1<U1, R> returning(ReplyParser<? extends R> parser);
   }
 
   public interface CommandBuilder2<T1, T2> extends CommandBuilderBase<CommandBuilder2<T1, T2>> {
-    <T> CommandBuilder3<T1, T2, T> withArgument(Encoder<T> encoder);
+    <T> CommandBuilder3<T1, T2, T> withArg(Encoder<T> encoder);
 
     <U1 extends T1, U2 extends T2, R> Command2<U1, U2, R> returning(ReplyParser<? extends R> parser);
   }

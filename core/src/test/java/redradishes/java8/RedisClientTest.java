@@ -69,77 +69,71 @@ public class RedisClientTest {
   private RedisClientFactory factory;
   private RedisClient redisClient;
   public static final Command1<CharSequence[], Integer> DEL =
-      command("DEL").withArgument(arrayArg(strArg(UTF_8))).returning(integerReply());
+      command("DEL").withArg(arrayArg(strArg(UTF_8))).returning(integerReply());
   public static final Command<CharSequence> PING = command("PING").returning(simpleStringReply());
   public static final Command<CharSequence> FLUSHDB = command("FLUSHDB").returning(simpleStringReply());
   public static final Command1<CharSequence, CharSequence> ECHO =
-      command("ECHO").withArgument(strArg(UTF_8)).returning(bulkStringReply(charSequence()));
+      command("ECHO").withArg(strArg(UTF_8)).returning(bulkStringReply(charSequence()));
   public static final Command1<CharSequence, byte[]> GET =
-      command("GET").withArgument(strArg(UTF_8)).returning(bulkStringReply(byteArray()));
+      command("GET").withArg(strArg(UTF_8)).returning(bulkStringReply(byteArray()));
   public static final Command1<CharSequence, List<CharSequence>> HKEYS =
-      command("HKEYS").withArgument(strArg(UTF_8)).returning(arrayReply(collection(ArrayList::new), charSequence()));
+      command("HKEYS").withArg(strArg(UTF_8)).returning(arrayReply(collection(ArrayList::new), charSequence()));
   public static final Command1<CharSequence, CharSequence[]> HKEYS_A =
-      command("HKEYS").withArgument(strArg(UTF_8)).returning(arrayReply(array(CharSequence[]::new), charSequence()));
+      command("HKEYS").withArg(strArg(UTF_8)).returning(arrayReply(array(CharSequence[]::new), charSequence()));
   public static final Command1<CharSequence, Map<String, CharSequence>> HGETALL =
-      command("HGETALL").withArgument(strArg(UTF_8)).returning(mapReply(map(HashMap::new), string(), charSequence()));
+      command("HGETALL").withArg(strArg(UTF_8)).returning(mapReply(map(HashMap::new), string(), charSequence()));
   public static final Command1<CharSequence, Integer> HLEN =
-      command("HLEN").withArgument(strArg(UTF_8)).returning(integerReply());
+      command("HLEN").withArg(strArg(UTF_8)).returning(integerReply());
   public static final Command1<CharSequence, Set<Long>> SMEMBERS =
-      command("SMEMBERS").withArgument(strArg(UTF_8)).returning(arrayReply(collection(HashSet::new), _long()));
+      command("SMEMBERS").withArg(strArg(UTF_8)).returning(arrayReply(collection(HashSet::new), _long()));
   public static final Command1<CharSequence, List<Integer>> SMEMBERS_INTEGER_LIST =
-      command("SMEMBERS").withArgument(strArg(UTF_8)).returning(arrayReply(collection(ArrayList::new), integer()));
+      command("SMEMBERS").withArg(strArg(UTF_8)).returning(arrayReply(collection(ArrayList::new), integer()));
   public static final Command2<CharSequence, CharSequence[], Integer> HDEL =
-      command("HDEL").withArgument(strArg(UTF_8)).withArgument(arrayArg(strArg(UTF_8))).returning(integerReply());
+      command("HDEL").withArg(strArg(UTF_8)).withArg(arrayArg(strArg(UTF_8))).returning(integerReply());
   public static final Command2<CharSequence, CharSequence, CharSequence> HGET =
-      command("HGET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8))
-          .returning(bulkStringReply(charSequence()));
+      command("HGET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).returning(bulkStringReply(charSequence()));
   public static final Command2<CharSequence, CharSequence, byte[]> HGET_BYTES =
-      command("HGET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).returning(bulkStringReply(byteArray()));
+      command("HGET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).returning(bulkStringReply(byteArray()));
   public static final Command2<CharSequence, CharSequence, Long> HGET_LONG =
-      command("HGET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).returning(bulkStringReply(_long()));
+      command("HGET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).returning(bulkStringReply(_long()));
   public static final Command2<CharSequence, CharSequence[], List<CharSequence>> HMGET =
-      command("HMGET").withArgument(strArg(UTF_8)).withArgument(arrayArg(strArg(UTF_8)))
+      command("HMGET").withArg(strArg(UTF_8)).withArg(arrayArg(strArg(UTF_8)))
           .returning(arrayReply(collection(ArrayList::new), charSequence()));
   public static final Command2<CharSequence, Collection<CharSequence>, List<CharSequence>> HMGET2 =
-      command("HMGET").withArgument(strArg(UTF_8)).withArgument(collArg(strArg(UTF_8)))
+      command("HMGET").withArg(strArg(UTF_8)).withArg(collArg(strArg(UTF_8)))
           .returning(arrayReply(collection(ArrayList::new), charSequence()));
   public static final Command2<CharSequence, Map<String, CharSequence>, CharSequence> HMSET =
-      command("HMSET").withArgument(strArg(UTF_8)).withArgument(mapArg(strArg(UTF_8), strArg(UTF_8)))
+      command("HMSET").withArg(strArg(UTF_8)).withArg(mapArg(strArg(UTF_8), strArg(UTF_8)))
           .returning(simpleStringReply());
   public static final Command2<CharSequence, Collection<Long>, Integer> SADD =
-      command("SADD").withArgument(strArg(UTF_8)).withArgument(collArg(longArg())).returning(integerReply());
+      command("SADD").withArg(strArg(UTF_8)).withArg(collArg(longArg())).returning(integerReply());
   public static final Command2<CharSequence, long[], Integer> SADD_LONG_ARR =
-      command("SADD").withArgument(strArg(UTF_8)).withArgument(longArrayArg()).returning(integerReply());
+      command("SADD").withArg(strArg(UTF_8)).withArg(longArrayArg()).returning(integerReply());
   public static final Command2<CharSequence, int[], Integer> SADD_INT_ARR =
-      command("SADD").withArgument(strArg(UTF_8)).withArgument(intArrayArg()).returning(integerReply());
+      command("SADD").withArg(strArg(UTF_8)).withArg(intArrayArg()).returning(integerReply());
   public static final Command2<CharSequence, CharSequence, CharSequence> SET =
-      command("SET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).returning(simpleStringReply());
+      command("SET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).returning(simpleStringReply());
   public static final Command2<CharSequence, byte[], CharSequence> SET_BYTES =
-      command("SET").withArgument(strArg(UTF_8)).withArgument(bytesArg()).returning(simpleStringReply());
+      command("SET").withArg(strArg(UTF_8)).withArg(bytesArg()).returning(simpleStringReply());
   public static final Command3<CharSequence, byte[], Integer, CharSequence> SET_BYTES_EX =
-      command("SET").withArgument(strArg(UTF_8)).withArgument(bytesArg()).withOption("EX").withArgument(intArg())
+      command("SET").withArg(strArg(UTF_8)).withArg(bytesArg()).withOption("EX").withArg(intArg())
           .returning(simpleStringReply());
   public static final Command2<CharSequence, Long, CharSequence> SET_LONG =
-      command("SET").withArgument(strArg(UTF_8)).withArgument(longArg()).returning(simpleStringReply());
+      command("SET").withArg(strArg(UTF_8)).withArg(longArg()).returning(simpleStringReply());
   public static final Command2<CharSequence, byte[], Integer> SETNX =
-      command("SETNX").withArgument(strArg(UTF_8)).withArgument(bytesArg()).returning(integerReply());
+      command("SETNX").withArg(strArg(UTF_8)).withArg(bytesArg()).returning(integerReply());
   public static final Command3<CharSequence, CharSequence, CharSequence, Integer> HSET =
-      command("HSET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8))
-          .returning(integerReply());
+      command("HSET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).returning(integerReply());
   public static final Command3<CharSequence, CharSequence, byte[], Integer> HSET_BYTES =
-      command("HSET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).withArgument(bytesArg())
-          .returning(integerReply());
+      command("HSET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).withArg(bytesArg()).returning(integerReply());
   public static final Command3<CharSequence, CharSequence, Long, Integer> HSET_LONG =
-      command("HSET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).withArgument(longArg())
-          .returning(integerReply());
+      command("HSET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).withArg(longArg()).returning(integerReply());
   public static final Command3<CharSequence, CharSequence, Long, Long> HINCRBY =
-      command("HINCRBY").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).withArgument(longArg())
-          .returning(longReply());
+      command("HINCRBY").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).withArg(longArg()).returning(longReply());
   public static final Command3<? super CharSequence, Long, CharSequence, Integer> ZADD =
-      command("ZADD").withArgument(strArg(UTF_8)).withArgument(longArg()).withArgument(strArg(UTF_8))
-          .returning(integerReply());
+      command("ZADD").withArg(strArg(UTF_8)).withArg(longArg()).withArg(strArg(UTF_8)).returning(integerReply());
   public static final Command2<CharSequence, CharSequence, Integer> ZRANK =
-      command("ZRANK").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).returning(integerReply());
+      command("ZRANK").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).returning(integerReply());
 
   @Before
   public void openConnection() throws Exception {
