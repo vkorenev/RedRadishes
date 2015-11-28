@@ -57,6 +57,7 @@ import static redradishes.decoder.Replies.simpleStringReply;
 import static redradishes.encoder.Encoders.arrayArg;
 import static redradishes.encoder.Encoders.bytesArg;
 import static redradishes.encoder.Encoders.collArg;
+import static redradishes.encoder.Encoders.intArg;
 import static redradishes.encoder.Encoders.intArrayArg;
 import static redradishes.encoder.Encoders.longArg;
 import static redradishes.encoder.Encoders.longArrayArg;
@@ -115,6 +116,9 @@ public class RedisClientTest {
       command("SET").withArgument(strArg(UTF_8)).withArgument(strArg(UTF_8)).returning(simpleStringReply());
   public static final Command2<CharSequence, byte[], CharSequence> SET_BYTES =
       command("SET").withArgument(strArg(UTF_8)).withArgument(bytesArg()).returning(simpleStringReply());
+  public static final Command3<CharSequence, byte[], Integer, CharSequence> SET_BYTES_EX =
+      command("SET").withArgument(strArg(UTF_8)).withArgument(bytesArg()).withOption("EX").withArgument(intArg())
+          .returning(simpleStringReply());
   public static final Command2<CharSequence, Long, CharSequence> SET_LONG =
       command("SET").withArgument(strArg(UTF_8)).withArgument(longArg()).returning(simpleStringReply());
   public static final Command2<CharSequence, byte[], Integer> SETNX =
@@ -262,16 +266,16 @@ public class RedisClientTest {
     assertArrayEquals(redisClient.send(GET, key).join(), val2);
   }
 
-//  @Test
-//  public void getSetExBytes() throws Exception {
-//    String key = "KEY_1";
-//    byte[] val1 = {'1', '2', '3'};
-//    byte[] val2 = {'4', '5', '6'};
-//    assertThat(redisClient.send(GET, key).join(), nullValue());
-//    assertThat(redisClient.send(SET_BYTES, key, val1, EX, 10).join(), hasSameContentAs("OK"));
-//    assertThat(redisClient.send(SET_BYTES, key, val2).join(), hasSameContentAs("OK"));
-//    assertArrayEquals(redisClient.send(GET, key).join(), val2);
-//  }
+  @Test
+  public void getSetExBytes() throws Exception {
+    String key = "KEY_1";
+    byte[] val1 = {'1', '2', '3'};
+    byte[] val2 = {'4', '5', '6'};
+    assertThat(redisClient.send(GET, key).join(), nullValue());
+    assertThat(redisClient.send(SET_BYTES_EX, key, val1, 10).join(), hasSameContentAs("OK"));
+    assertThat(redisClient.send(SET_BYTES, key, val2).join(), hasSameContentAs("OK"));
+    assertArrayEquals(redisClient.send(GET, key).join(), val2);
+  }
 
   @Test
   public void del() throws Exception {
