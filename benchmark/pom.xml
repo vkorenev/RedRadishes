@@ -22,7 +22,7 @@
     <dependency>
       <groupId>biz.paluch.redis</groupId>
       <artifactId>lettuce</artifactId>
-      <version>3.3.1.Final</version>
+      <version>4.0.Final</version>
     </dependency>
     <dependency>
       <groupId>org.openjdk.jmh</groupId>

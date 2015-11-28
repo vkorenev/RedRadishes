@@ -1,23 +1,23 @@
 package redradishes;
 
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.lambdaworks.redis.RedisAsyncConnection;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Threads;
+import org.openjdk.jmh.annotations.Warmup;
 import redradishes.commands.Command1;
 import redradishes.commands.Command2;
-import redradishes.guava.RedisClient;
-import redradishes.guava.RedisClientFactory;
+import redradishes.java8.RedisClient;
+import redradishes.java8.RedisClientFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static redradishes.commands.CommandBuilder.command;
@@ -29,6 +29,8 @@ import static redradishes.encoder.Encoders.arrayArg;
 import static redradishes.encoder.Encoders.strArg;
 
 @Threads(16)
+@Warmup(iterations = 5)
+@Measurement(iterations = 10)
 public class SetGetDelStringKeyStringValue {
   public static final Command2<CharSequence, CharSequence, CharSequence> SET =
       command("SET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).returning(simpleStringReply());
@@ -68,24 +70,23 @@ public class SetGetDelStringKeyStringValue {
     String thread = threadName.threadName;
     RedisClient client = redRadishesClient.client;
     int num = 100;
-    List<ListenableFuture<CharSequence>> setResults = new ArrayList<>(num);
-    List<ListenableFuture<Boolean>> getResults = new ArrayList<>(num);
-    List<ListenableFuture<Integer>> delResults = new ArrayList<>(num);
+    List<CompletableFuture<CharSequence>> setResults = new ArrayList<>(num);
+    List<CompletableFuture<Boolean>> getResults = new ArrayList<>(num);
+    List<CompletableFuture<Integer>> delResults = new ArrayList<>(num);
     for (int i = 0; i < num; i++) {
       String key = "key" + i + thread;
       String value = "value" + i;
       setResults.add(client.send(SET, key, value));
-      getResults.add(Futures.transform(client.send(GET, key),
-          (Function<String, Boolean>) getResult -> getResult != null && getResult.equals(value)));
+      getResults.add(client.send(GET, key).thenApply(getResult -> getResult != null && getResult.equals(value)));
       delResults.add(client.send(DEL, key));
     }
-    for (ListenableFuture<CharSequence> setResult : setResults) {
+    for (CompletableFuture<CharSequence> setResult : setResults) {
       setResult.get();
     }
-    for (ListenableFuture<Boolean> getResult : getResults) {
+    for (CompletableFuture<Boolean> getResult : getResults) {
       if (!getResult.get()) throw new Exception("GET error");
     }
-    for (ListenableFuture<Integer> delResult : delResults) {
+    for (CompletableFuture<Integer> delResult : delResults) {
       if (delResult.get() != 1) throw new Exception("DEL error");
     }
   }
@@ -95,24 +96,25 @@ public class SetGetDelStringKeyStringValue {
     String thread = threadName.threadName;
     RedisClient client = redRadishesClient.client;
     int num = 100;
-    List<ListenableFuture<Boolean>> getResults = new ArrayList<>(num);
+    List<CompletableFuture<Boolean>> getResults = new ArrayList<>(num);
     for (int i = 0; i < num; i++) {
       String key = "key" + i + thread;
       String value = "value" + i;
-      ListenableFuture<Boolean> getResult = client.send(SET.apply(key, value)
+      CompletableFuture<Boolean> getResult = client.send(SET.apply(key, value)
           .combine(GET.apply(key), (setResult, getResult1) -> getResult1 != null && getResult1.equals(value))
           .combine(DEL.apply(new CharSequence[]{key}), (prevResult, delResult) -> prevResult && delResult == 1));
       getResults.add(getResult);
     }
-    for (ListenableFuture<Boolean> getResult : getResults) {
+    for (CompletableFuture<Boolean> getResult : getResults) {
       if (!getResult.get()) throw new Exception("error");
     }
   }
 
   @State(Scope.Benchmark)
   public static class LettuceClient {
-    private final com.lambdaworks.redis.RedisClient client = new com.lambdaworks.redis.RedisClient("localhost", 6379);
-    private final RedisAsyncConnection<String, String> connection = client.connectAsync();
+    private final com.lambdaworks.redis.RedisClient client =
+        com.lambdaworks.redis.RedisClient.create("redis://localhost:6379");
+    private final RedisAsyncCommands<String, String> connection = client.connect().async();
 
     @TearDown
     public void tearDown() {
@@ -124,26 +126,26 @@ public class SetGetDelStringKeyStringValue {
   @Benchmark
   public void lettuce(LettuceClient lettuceClient, ThreadName threadName) throws Exception {
     String thread = threadName.threadName;
-    RedisAsyncConnection<String, String> connection = lettuceClient.connection;
+    RedisAsyncCommands<String, String> connection = lettuceClient.connection;
     int num = 100;
-    List<ListenableFuture<String>> setResults = new ArrayList<>(num);
-    List<ListenableFuture<Boolean>> getResults = new ArrayList<>(num);
-    List<ListenableFuture<Long>> delResults = new ArrayList<>(num);
+    List<CompletableFuture<String>> setResults = new ArrayList<>(num);
+    List<CompletableFuture<Boolean>> getResults = new ArrayList<>(num);
+    List<CompletableFuture<Long>> delResults = new ArrayList<>(num);
     for (int i = 0; i < num; i++) {
       String key = "key" + i + thread;
       String value = "value" + i;
-      setResults.add(connection.set(key, value));
-      getResults.add(Futures.transform(connection.get(key),
-          (Function<String, Boolean>) getResult -> getResult != null && getResult.equals(value)));
-      delResults.add(connection.del(key));
+      setResults.add(connection.set(key, value).toCompletableFuture());
+      getResults.add(connection.get(key).toCompletableFuture()
+          .thenApply(getResult -> getResult != null && getResult.equals(value)));
+      delResults.add(connection.del(key).toCompletableFuture());
     }
-    for (ListenableFuture<String> setResult : setResults) {
+    for (CompletableFuture<String> setResult : setResults) {
       setResult.get();
     }
-    for (ListenableFuture<Boolean> getResult : getResults) {
+    for (CompletableFuture<Boolean> getResult : getResults) {
       if (!getResult.get()) throw new Exception("GET error");
     }
-    for (ListenableFuture<Long> delResult : delResults) {
+    for (CompletableFuture<Long> delResult : delResults) {
       if (delResult.get() != 1) throw new Exception("DEL error");
     }
   }
