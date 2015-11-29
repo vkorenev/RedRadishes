@@ -130,6 +130,17 @@ public class RepliesTest {
     verifyZeroInteractions(charsetDecoder);
   }
 
+  @Theory
+  public <E> void parsesErrorArrayReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
+      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+    @SuppressWarnings("unchecked") ArrayBuilderFactory<E, ?> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
+    @SuppressWarnings("unchecked") BulkStringBuilderFactory<E> bulkStringBuilderFactory =
+        mock(BulkStringBuilderFactory.class);
+    parsesError(s, bufferSize, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory));
+    verifyZeroInteractions(arrayBuilderFactory);
+    verifyZeroInteractions(bulkStringBuilderFactory);
+  }
+
   private void parsesError(String error, int bufferSize, ReplyParser<?> parser) {
     String value = error.replace('\r', ' ').replace('\n', ' ');
     Iterator<ByteBuffer> chunks = split(("-" + value + "\r\n").getBytes(US_ASCII), bufferSize);
