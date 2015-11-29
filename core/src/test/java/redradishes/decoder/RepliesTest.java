@@ -84,13 +84,7 @@ public class RepliesTest {
 
   @Theory
   public void parsesBulkStringReply(@ForAll byte[] bytes, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
-    byte[] header = ("$" + Integer.toString(bytes.length) + "\r\n").getBytes(US_ASCII);
-    byte[] target = Arrays.copyOf(header, header.length + bytes.length + 2);
-    System.arraycopy(bytes, 0, target, header.length, bytes.length);
-    target[target.length - 2] = '\r';
-    target[target.length - 1] = '\n';
-
-    Iterator<ByteBuffer> chunks = split(target, bufferSize);
+    Iterator<ByteBuffer> chunks = split(getByteString(bytes), bufferSize);
     assertThat(parseReply(chunks, Replies.bulkStringReply(new TestBulkStringBuilderFactory()), Function.identity(),
         message -> {
           throw new RuntimeException(message.toString());
@@ -125,5 +119,18 @@ public class RepliesTest {
       throw new RuntimeException("Unexpected result: " + result);
     }, message -> message, charsetDecoder).toString(), equalTo(value));
     verifyZeroInteractions(charsetDecoder);
+  }
+
+  private static byte[] getByteString(byte[] bytes) {
+    byte[] header = getLenPrefix('$', bytes.length).getBytes(US_ASCII);
+    byte[] target = Arrays.copyOf(header, header.length + bytes.length + 2);
+    System.arraycopy(bytes, 0, target, header.length, bytes.length);
+    target[target.length - 2] = '\r';
+    target[target.length - 1] = '\n';
+    return target;
+  }
+
+  private static String getLenPrefix(char marker, int length) {
+    return marker + Integer.toString(length) + "\r\n";
   }
 }
