@@ -1,5 +1,6 @@
 package redradishes.decoder;
 
+import com.google.common.primitives.Bytes;
 import com.pholser.junit.quickcheck.ForAll;
 import com.pholser.junit.quickcheck.From;
 import com.pholser.junit.quickcheck.generator.java.lang.Encoded;
@@ -18,6 +19,7 @@ import java.nio.charset.CharsetDecoder;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static org.hamcrest.Matchers.equalTo;
@@ -25,6 +27,8 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static redradishes.decoder.ArrayBuilders.array;
+import static redradishes.decoder.Replies.arrayReply;
 import static redradishes.decoder.Replies.bulkStringReply;
 import static redradishes.decoder.Replies.integerReply;
 import static redradishes.decoder.Replies.longReply;
@@ -109,6 +113,17 @@ public class RepliesTest {
     BulkStringBuilderFactory<?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     parsesError(s, bufferSize, bulkStringReply(bulkStringBuilderFactory));
     verifyZeroInteractions(bulkStringBuilderFactory);
+  }
+
+  @Theory
+  public void parsesArrayReply(@ForAll byte[][] arrays, @TestedOn(ints = {10, 100, 1000}) int bufferSize) {
+    byte[] msg = Bytes.concat(Stream.concat(Stream.of(getLenPrefix('*', arrays.length).getBytes(US_ASCII)),
+        Arrays.stream(arrays).map(RepliesTest::getByteString)).toArray(byte[][]::new));
+    Iterator<ByteBuffer> chunks = split(msg, bufferSize);
+    assertThat(
+        parseReply(chunks, arrayReply(array(byte[][]::new), new TestBulkStringBuilderFactory()), Function.identity(),
+            throwingFailureHandler(), charsetDecoder), equalTo(arrays));
+    verifyZeroInteractions(charsetDecoder);
   }
 
   private void parsesError(String error, int bufferSize, ReplyParser<?> parser) {
