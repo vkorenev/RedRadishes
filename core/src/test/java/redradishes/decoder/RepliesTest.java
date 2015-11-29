@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import redradishes.decoder.parser.ReplyParser;
+import redradishes.decoder.parser.TestUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
@@ -33,8 +34,11 @@ import static redradishes.decoder.Replies.bulkStringReply;
 import static redradishes.decoder.Replies.integerReply;
 import static redradishes.decoder.Replies.longReply;
 import static redradishes.decoder.Replies.simpleStringReply;
+import static redradishes.decoder.parser.TestUtil.getByteString;
+import static redradishes.decoder.parser.TestUtil.getLenPrefix;
 import static redradishes.decoder.parser.TestUtil.parseReply;
 import static redradishes.decoder.parser.TestUtil.split;
+import static redradishes.decoder.parser.TestUtil.throwingFailureHandler;
 
 @RunWith(Theories.class)
 public class RepliesTest {
@@ -118,7 +122,7 @@ public class RepliesTest {
   @Theory
   public void parsesArrayReply(@ForAll byte[][] arrays, @TestedOn(ints = {10, 100, 1000}) int bufferSize) {
     byte[] msg = Bytes.concat(Stream.concat(Stream.of(getLenPrefix('*', arrays.length).getBytes(US_ASCII)),
-        Arrays.stream(arrays).map(RepliesTest::getByteString)).toArray(byte[][]::new));
+        Arrays.stream(arrays).map(TestUtil::getByteString)).toArray(byte[][]::new));
     Iterator<ByteBuffer> chunks = split(msg, bufferSize);
     assertThat(
         parseReply(chunks, arrayReply(array(byte[][]::new), new TestBulkStringBuilderFactory()), Function.identity(),
@@ -133,24 +137,5 @@ public class RepliesTest {
       throw new RuntimeException("Unexpected result: " + result);
     }, message -> message, charsetDecoder).toString(), equalTo(value));
     verifyZeroInteractions(charsetDecoder);
-  }
-
-  private static <T> ReplyParser.FailureHandler<T> throwingFailureHandler() {
-    return message -> {
-      throw new RuntimeException(message.toString());
-    };
-  }
-
-  private static byte[] getByteString(byte[] bytes) {
-    byte[] header = getLenPrefix('$', bytes.length).getBytes(US_ASCII);
-    byte[] target = Arrays.copyOf(header, header.length + bytes.length + 2);
-    System.arraycopy(bytes, 0, target, header.length, bytes.length);
-    target[target.length - 2] = '\r';
-    target[target.length - 1] = '\n';
-    return target;
-  }
-
-  private static String getLenPrefix(char marker, int length) {
-    return marker + Integer.toString(length) + "\r\n";
   }
 }
