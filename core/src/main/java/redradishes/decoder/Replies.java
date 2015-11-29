@@ -7,6 +7,7 @@ import redradishes.decoder.parser.BulkStringParser;
 import redradishes.decoder.parser.BulkStringReplyParser;
 import redradishes.decoder.parser.IntegerReplyParser;
 import redradishes.decoder.parser.Parser;
+import redradishes.decoder.parser.ScanReplyParser;
 import redradishes.decoder.parser.SeqParser;
 import redradishes.decoder.parser.SimpleStringReplyParser;
 
@@ -50,5 +51,11 @@ public class Replies {
       BulkStringBuilderFactory<? extends V> valueBuilderFactory) {
     SeqParser<K, V> kvParser = seq(bulkStringParser(keyBuilderFactory), bulkStringParser(valueBuilderFactory));
     return new ArrayReplyParser<>(len -> new ArrayAsMapParser<>(len / 2, arrayBuilderFactory, kvParser));
+  }
+
+  public static <E, T> ScanReplyParser<T> scanReply(ArrayBuilderFactory<E, ? extends T> arrayBuilderFactory,
+      BulkStringBuilderFactory<? extends E> elementBuilderFactory) {
+    Parser<E> elementParser = bulkStringParser(elementBuilderFactory);
+    return new ScanReplyParser<>(len -> new ArrayParser<>(len, arrayBuilderFactory, elementParser));
   }
 }

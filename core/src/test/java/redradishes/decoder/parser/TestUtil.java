@@ -1,5 +1,6 @@
 package redradishes.decoder.parser;
 
+import com.google.common.io.ByteArrayDataOutput;
 import redradishes.decoder.parser.ReplyParser.FailureHandler;
 
 import java.nio.ByteBuffer;
@@ -43,7 +44,7 @@ public class TestUtil {
   }
 
   public static byte[] getByteString(byte[] bytes) {
-    byte[] header = getLenPrefix('$', bytes.length).getBytes(US_ASCII);
+    byte[] header = ('$' + Integer.toString(bytes.length) + "\r\n").getBytes(US_ASCII);
     byte[] target = Arrays.copyOf(header, header.length + bytes.length + 2);
     System.arraycopy(bytes, 0, target, header.length, bytes.length);
     target[target.length - 2] = '\r';
@@ -51,7 +52,17 @@ public class TestUtil {
     return target;
   }
 
-  public static String getLenPrefix(char marker, int length) {
-    return marker + Integer.toString(length) + "\r\n";
+  public static void writeByteString(byte[] bytes, ByteArrayDataOutput out) {
+    writeLenPrefix('$', bytes.length, out);
+    out.write(bytes);
+    out.write('\r');
+    out.write('\n');
+  }
+
+  public static void writeLenPrefix(char marker, int length, ByteArrayDataOutput out) {
+    out.write(marker);
+    out.write(Integer.toString(length).getBytes(US_ASCII));
+    out.write('\r');
+    out.write('\n');
   }
 }

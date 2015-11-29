@@ -1,8 +1,10 @@
 package redradishes.decoder;
 
-import com.google.common.primitives.Bytes;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import com.pholser.junit.quickcheck.ForAll;
 import com.pholser.junit.quickcheck.From;
+import com.pholser.junit.quickcheck.generator.InRange;
 import com.pholser.junit.quickcheck.generator.java.lang.Encoded;
 import org.junit.Rule;
 import org.junit.contrib.theories.Theories;
@@ -12,15 +14,13 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import redradishes.ScanResult;
 import redradishes.decoder.parser.ReplyParser;
-import redradishes.decoder.parser.TestUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static org.hamcrest.Matchers.equalTo;
@@ -33,12 +33,14 @@ import static redradishes.decoder.Replies.arrayReply;
 import static redradishes.decoder.Replies.bulkStringReply;
 import static redradishes.decoder.Replies.integerReply;
 import static redradishes.decoder.Replies.longReply;
+import static redradishes.decoder.Replies.scanReply;
 import static redradishes.decoder.Replies.simpleStringReply;
 import static redradishes.decoder.parser.TestUtil.getByteString;
-import static redradishes.decoder.parser.TestUtil.getLenPrefix;
 import static redradishes.decoder.parser.TestUtil.parseReply;
 import static redradishes.decoder.parser.TestUtil.split;
 import static redradishes.decoder.parser.TestUtil.throwingFailureHandler;
+import static redradishes.decoder.parser.TestUtil.writeByteString;
+import static redradishes.decoder.parser.TestUtil.writeLenPrefix;
 
 @RunWith(Theories.class)
 public class RepliesTest {
@@ -121,9 +123,12 @@ public class RepliesTest {
 
   @Theory
   public void parsesArrayReply(@ForAll byte[][] arrays, @TestedOn(ints = {10, 100, 1000}) int bufferSize) {
-    byte[] msg = Bytes.concat(Stream.concat(Stream.of(getLenPrefix('*', arrays.length).getBytes(US_ASCII)),
-        Arrays.stream(arrays).map(TestUtil::getByteString)).toArray(byte[][]::new));
-    Iterator<ByteBuffer> chunks = split(msg, bufferSize);
+    ByteArrayDataOutput out = ByteStreams.newDataOutput();
+    writeLenPrefix('*', arrays.length, out);
+    for (byte[] bytes : arrays) {
+      writeByteString(bytes, out);
+    }
+    Iterator<ByteBuffer> chunks = split(out.toByteArray(), bufferSize);
     assertThat(
         parseReply(chunks, arrayReply(array(byte[][]::new), new TestBulkStringBuilderFactory()), Function.identity(),
             throwingFailureHandler(), charsetDecoder), equalTo(arrays));
@@ -137,6 +142,36 @@ public class RepliesTest {
     @SuppressWarnings("unchecked") BulkStringBuilderFactory<E> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);
     parsesError(s, bufferSize, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory));
+    verifyZeroInteractions(arrayBuilderFactory);
+    verifyZeroInteractions(bulkStringBuilderFactory);
+  }
+
+  @Theory
+  public void parsesScanReply(@ForAll(sampleSize = 10) @InRange(minLong = 0) long cursor, @ForAll byte[][] elements,
+      @TestedOn(ints = {100, 1000}) int bufferSize) {
+    ByteArrayDataOutput out = ByteStreams.newDataOutput();
+    writeLenPrefix('*', 2, out);
+    writeByteString(Long.toString(cursor).getBytes(US_ASCII), out);
+    writeLenPrefix('*', elements.length, out);
+    for (byte[] element : elements) {
+      writeByteString(element, out);
+    }
+    Iterator<ByteBuffer> chunks = split(out.toByteArray(), bufferSize);
+    ScanResult<byte[][]> scanResult =
+        parseReply(chunks, scanReply(array(byte[][]::new), new TestBulkStringBuilderFactory()), Function.identity(),
+            throwingFailureHandler(), charsetDecoder);
+    assertThat(scanResult.cursor, equalTo(cursor));
+    assertThat(scanResult.elements, equalTo(elements));
+    verifyZeroInteractions(charsetDecoder);
+  }
+
+  @Theory
+  public <E> void parsesErrorScanReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
+      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+    @SuppressWarnings("unchecked") ArrayBuilderFactory<E, ?> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
+    @SuppressWarnings("unchecked") BulkStringBuilderFactory<E> bulkStringBuilderFactory =
+        mock(BulkStringBuilderFactory.class);
+    parsesError(s, bufferSize, scanReply(arrayBuilderFactory, bulkStringBuilderFactory));
     verifyZeroInteractions(arrayBuilderFactory);
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
