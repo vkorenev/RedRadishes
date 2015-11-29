@@ -66,15 +66,19 @@ public class BulkStringBuildersTest {
   @Theory
   public void parsesIntegers(@ForAll int value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(getByteString(Integer.toString(value).getBytes(US_ASCII)), bufferSize);
-    assertThat(parseReply(chunks, bulkStringReply(integer()), Function.identity(), throwingFailureHandler(),
-        US_ASCII.newDecoder()), equalTo(value));
+    assertThat(
+        parseReply(chunks, bulkStringReply(integer()), Function.identity(), throwingFailureHandler(), charsetDecoder),
+        equalTo(value));
+    verifyZeroInteractions(charsetDecoder);
   }
 
   @Theory
   public void parsesLongs(@ForAll long value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(getByteString(Long.toString(value).getBytes(US_ASCII)), bufferSize);
-    assertThat(parseReply(chunks, bulkStringReply(_long()), Function.identity(), throwingFailureHandler(),
-        US_ASCII.newDecoder()), equalTo(value));
+    assertThat(
+        parseReply(chunks, bulkStringReply(_long()), Function.identity(), throwingFailureHandler(), charsetDecoder),
+        equalTo(value));
+    verifyZeroInteractions(charsetDecoder);
   }
 
   @Theory
