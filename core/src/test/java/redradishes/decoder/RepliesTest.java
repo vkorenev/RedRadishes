@@ -25,6 +25,10 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static redradishes.decoder.Replies.bulkStringReply;
+import static redradishes.decoder.Replies.integerReply;
+import static redradishes.decoder.Replies.longReply;
+import static redradishes.decoder.Replies.simpleStringReply;
 import static redradishes.decoder.parser.TestUtil.parseReply;
 import static redradishes.decoder.parser.TestUtil.split;
 
@@ -38,31 +42,29 @@ public class RepliesTest {
   @Theory
   public void parsesIntegerReply(@ForAll int num, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split((":" + num + "\r\n").getBytes(US_ASCII), bufferSize);
-    assertThat(parseReply(chunks, Replies.integerReply(), Function.identity(), message -> {
-      throw new RuntimeException(message.toString());
-    }, charsetDecoder), equalTo(num));
+    assertThat(parseReply(chunks, integerReply(), Function.identity(), throwingFailureHandler(), charsetDecoder),
+        equalTo(num));
     verifyZeroInteractions(charsetDecoder);
   }
 
   @Theory
   public void parsesErrorIntegerReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
-    parsesError(s, bufferSize, Replies.integerReply());
+    parsesError(s, bufferSize, integerReply());
   }
 
   @Theory
   public void parsesLongReply(@ForAll long num, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split((":" + num + "\r\n").getBytes(US_ASCII), bufferSize);
-    assertThat(parseReply(chunks, Replies.longReply(), Function.identity(), message -> {
-      throw new RuntimeException(message.toString());
-    }, charsetDecoder), equalTo(num));
+    assertThat(parseReply(chunks, longReply(), Function.identity(), throwingFailureHandler(), charsetDecoder),
+        equalTo(num));
     verifyZeroInteractions(charsetDecoder);
   }
 
   @Theory
   public void parsesErrorLongReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
-    parsesError(s, bufferSize, Replies.longReply());
+    parsesError(s, bufferSize, longReply());
   }
 
   @Theory
@@ -70,25 +72,22 @@ public class RepliesTest {
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     String value = s.replace('\r', ' ').replace('\n', ' ');
     Iterator<ByteBuffer> chunks = split(("+" + value + "\r\n").getBytes(US_ASCII), bufferSize);
-    assertThat(parseReply(chunks, Replies.simpleStringReply(), Function.identity(), message -> {
-      throw new RuntimeException(message.toString());
-    }, charsetDecoder).toString(), equalTo(value));
+    assertThat(parseReply(chunks, simpleStringReply(), Function.identity(), throwingFailureHandler(), charsetDecoder)
+        .toString(), equalTo(value));
     verifyZeroInteractions(charsetDecoder);
   }
 
   @Theory
   public void parsesErrorSimpleStringReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
-    parsesError(s, bufferSize, Replies.simpleStringReply());
+    parsesError(s, bufferSize, simpleStringReply());
   }
 
   @Theory
   public void parsesBulkStringReply(@ForAll byte[] bytes, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(getByteString(bytes), bufferSize);
-    assertThat(parseReply(chunks, Replies.bulkStringReply(new TestBulkStringBuilderFactory()), Function.identity(),
-        message -> {
-          throw new RuntimeException(message.toString());
-        }, charsetDecoder), equalTo(bytes));
+    assertThat(parseReply(chunks, bulkStringReply(new TestBulkStringBuilderFactory()), Function.identity(),
+        throwingFailureHandler(), charsetDecoder), equalTo(bytes));
     verifyZeroInteractions(charsetDecoder);
   }
 
@@ -97,9 +96,9 @@ public class RepliesTest {
     byte[] bytes = "$-1\r\n".getBytes(US_ASCII);
     Iterator<ByteBuffer> chunks = split(bytes, bufferSize);
     BulkStringBuilderFactory<?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
-    assertThat(parseReply(chunks, Replies.bulkStringReply(bulkStringBuilderFactory), Function.identity(), message -> {
-      throw new RuntimeException(message.toString());
-    }, charsetDecoder), nullValue());
+    assertThat(
+        parseReply(chunks, bulkStringReply(bulkStringBuilderFactory), Function.identity(), throwingFailureHandler(),
+            charsetDecoder), nullValue());
     verifyZeroInteractions(charsetDecoder);
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
@@ -108,7 +107,7 @@ public class RepliesTest {
   public void parsesErrorBulkStringReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     BulkStringBuilderFactory<?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
-    parsesError(s, bufferSize, Replies.bulkStringReply(bulkStringBuilderFactory));
+    parsesError(s, bufferSize, bulkStringReply(bulkStringBuilderFactory));
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
@@ -119,6 +118,12 @@ public class RepliesTest {
       throw new RuntimeException("Unexpected result: " + result);
     }, message -> message, charsetDecoder).toString(), equalTo(value));
     verifyZeroInteractions(charsetDecoder);
+  }
+
+  private static <T> ReplyParser.FailureHandler<T> throwingFailureHandler() {
+    return message -> {
+      throw new RuntimeException(message.toString());
+    };
   }
 
   private static byte[] getByteString(byte[] bytes) {
