@@ -1,6 +1,8 @@
 package redradishes.decoder;
 
 import com.pholser.junit.quickcheck.ForAll;
+import com.pholser.junit.quickcheck.From;
+import com.pholser.junit.quickcheck.generator.java.lang.Encoded;
 import org.junit.Rule;
 import org.junit.contrib.theories.DataPoints;
 import org.junit.contrib.theories.Theories;
@@ -17,6 +19,7 @@ import java.nio.charset.CharsetDecoder;
 import java.util.Iterator;
 import java.util.function.Function;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_16BE;
 import static java.nio.charset.StandardCharsets.UTF_16LE;
@@ -47,7 +50,14 @@ public class BulkStringBuildersTest {
   public static final Charset[] CHARSETS = {UTF_8, UTF_16BE, UTF_16LE};
 
   @Theory
-  public void parsesCharSequences(@ForAll String value, @TestedOn(ints = {1000}) int bufferSize, Charset charset) {
+  public void parsesCharSequences(@ForAll @From(Encoded.class) @Encoded.InCharset("ISO-8859-1") String value,
+      @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
+    parsesCharSequences(value, bufferSize, ISO_8859_1);
+  }
+
+  @Theory
+  public void parsesCharSequences(@ForAll String value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize,
+      Charset charset) {
     Iterator<ByteBuffer> chunks = split(getByteString(value.getBytes(charset)), bufferSize);
     CharSequence actual =
         parseReply(chunks, bulkStringReply(charSequence()), Function.identity(), throwingFailureHandler(),
@@ -56,7 +66,14 @@ public class BulkStringBuildersTest {
   }
 
   @Theory
-  public void parsesStrings(@ForAll String value, @TestedOn(ints = {1000}) int bufferSize, Charset charset) {
+  public void parsesStrings(@ForAll @From(Encoded.class) @Encoded.InCharset("ISO-8859-1") String value,
+      @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
+    parsesStrings(value, bufferSize, ISO_8859_1);
+  }
+
+  @Theory
+  public void parsesStrings(@ForAll String value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize,
+      Charset charset) {
     Iterator<ByteBuffer> chunks = split(getByteString(value.getBytes(charset)), bufferSize);
     CharSequence actual = parseReply(chunks, bulkStringReply(string()), Function.identity(), throwingFailureHandler(),
         charset.newDecoder());
