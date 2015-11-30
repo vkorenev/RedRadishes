@@ -1,5 +1,6 @@
 package redradishes.decoder.parser;
 
+import com.google.common.collect.AbstractIterator;
 import com.google.common.io.ByteArrayDataOutput;
 import redradishes.decoder.parser.ReplyParser.FailureHandler;
 
@@ -8,20 +9,34 @@ import java.nio.charset.CharsetDecoder;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Function;
-import java.util.stream.IntStream;
 
 import static java.lang.Math.min;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 
 public class TestUtil {
   public static Iterator<ByteBuffer> split(byte[] bytes, int chunkSize) {
-    ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-    int chunkNum = bytes.length / chunkSize + (bytes.length % chunkSize > 0 ? 1 : 0);
-    return IntStream.iterate(0, i -> i + chunkSize).limit(chunkNum).mapToObj(start -> {
-      ByteBuffer slice = byteBuffer.slice();
-      slice.position(start).limit(min(start + chunkSize, slice.capacity()));
-      return slice;
-    }).iterator();
+    return new AbstractIterator<ByteBuffer>() {
+      private final ByteBuffer byteBuffer = ByteBuffer.allocate(chunkSize + 10);
+      private int offset = 0;
+
+      {
+        byteBuffer.flip();
+      }
+
+      @Override
+      protected ByteBuffer computeNext() {
+        if (offset < bytes.length) {
+          byteBuffer.compact();
+          int size = min(chunkSize, bytes.length - offset);
+          byteBuffer.put(bytes, offset, size);
+          offset += size;
+          byteBuffer.flip();
+          return byteBuffer;
+        } else {
+          return endOfData();
+        }
+      }
+    };
   }
 
   static <T, U> U parse(Iterator<ByteBuffer> chunks, Parser<T> parser, Function<? super T, U> resultHandler,
