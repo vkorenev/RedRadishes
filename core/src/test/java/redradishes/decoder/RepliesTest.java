@@ -58,6 +58,15 @@ public class RepliesTest {
   }
 
   @Theory
+  public void parsesNullIntegerReply(@TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+    byte[] bytes = "$-1\r\n".getBytes(US_ASCII);
+    Iterator<ByteBuffer> chunks = split(bytes, bufferSize);
+    assertThat(parseReply(chunks, integerReply(), Function.identity(), throwingFailureHandler(), charsetDecoder),
+        nullValue());
+    verifyZeroInteractions(charsetDecoder);
+  }
+
+  @Theory
   public void parsesErrorIntegerReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     parsesError(s, bufferSize, integerReply());
@@ -68,6 +77,15 @@ public class RepliesTest {
     Iterator<ByteBuffer> chunks = split((":" + num + "\r\n").getBytes(US_ASCII), bufferSize);
     assertThat(parseReply(chunks, longReply(), Function.identity(), throwingFailureHandler(), charsetDecoder),
         equalTo(num));
+    verifyZeroInteractions(charsetDecoder);
+  }
+
+  @Theory
+  public void parsesNullLongReply(@TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+    byte[] bytes = "$-1\r\n".getBytes(US_ASCII);
+    Iterator<ByteBuffer> chunks = split(bytes, bufferSize);
+    assertThat(parseReply(chunks, longReply(), Function.identity(), throwingFailureHandler(), charsetDecoder),
+        nullValue());
     verifyZeroInteractions(charsetDecoder);
   }
 
@@ -84,6 +102,15 @@ public class RepliesTest {
     Iterator<ByteBuffer> chunks = split(("+" + value + "\r\n").getBytes(US_ASCII), bufferSize);
     assertThat(parseReply(chunks, simpleStringReply(), Function.identity(), throwingFailureHandler(), charsetDecoder)
         .toString(), equalTo(value));
+    verifyZeroInteractions(charsetDecoder);
+  }
+
+  @Theory
+  public void parsesNullStringReply(@TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+    byte[] bytes = "$-1\r\n".getBytes(US_ASCII);
+    Iterator<ByteBuffer> chunks = split(bytes, bufferSize);
+    assertThat(parseReply(chunks, simpleStringReply(), Function.identity(), throwingFailureHandler(), charsetDecoder),
+        nullValue());
     verifyZeroInteractions(charsetDecoder);
   }
 
@@ -133,6 +160,20 @@ public class RepliesTest {
         parseReply(chunks, arrayReply(array(byte[][]::new), new TestBulkStringBuilderFactory()), Function.identity(),
             throwingFailureHandler(), charsetDecoder), equalTo(arrays));
     verifyZeroInteractions(charsetDecoder);
+  }
+
+  @Theory
+  public <E> void parsesNullArrayReply(@TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+    byte[] bytes = "*-1\r\n".getBytes(US_ASCII);
+    Iterator<ByteBuffer> chunks = split(bytes, bufferSize);
+    @SuppressWarnings("unchecked") ArrayBuilderFactory<E, ?> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
+    @SuppressWarnings("unchecked") BulkStringBuilderFactory<E> bulkStringBuilderFactory =
+        mock(BulkStringBuilderFactory.class);
+    assertThat(parseReply(chunks, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory), Function.identity(),
+        throwingFailureHandler(), charsetDecoder), nullValue());
+    verifyZeroInteractions(charsetDecoder);
+    verifyZeroInteractions(arrayBuilderFactory);
+    verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
   @Theory
