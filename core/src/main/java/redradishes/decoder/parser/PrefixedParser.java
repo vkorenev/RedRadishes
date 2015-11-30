@@ -4,11 +4,11 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.util.function.Function;
 
-public class PrefixedParser<T> implements Parser<T> {
+class PrefixedParser<T> implements Parser<T> {
   private final char marker;
   private final Parser<T> parser;
 
-  public PrefixedParser(char marker, Parser<T> parser) {
+  PrefixedParser(char marker, Parser<T> parser) {
     this.marker = marker;
     this.parser = parser;
   }

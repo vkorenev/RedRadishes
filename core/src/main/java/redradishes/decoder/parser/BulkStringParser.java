@@ -27,18 +27,25 @@ public class BulkStringParser<T> implements Parser<T> {
   private <U> U doParse(ByteBuffer buffer, Function<? super T, U> resultHandler,
       PartialHandler<? super T, U> partialHandler, BulkStringBuilderFactory.Builder<? extends T> builder, int len,
       int state) {
+    readLoop:
     while (buffer.hasRemaining()) {
       switch (state) {
         case READING:
-          if (buffer.remaining() >= len) {
+          int remaining = buffer.remaining();
+          if (remaining >= len) {
             ByteBuffer src = buffer.slice();
             src.limit(len);
             buffer.position(buffer.position() + len);
             builder.appendLast(src);
+            if (src.hasRemaining()) {
+              throw new IllegalStateException("Bulk string decoding error");
+            }
             state = WAITING_FOR_CR;
           } else {
-            len -= buffer.remaining();
             builder.append(buffer);
+            int bytesRead = remaining - buffer.remaining();
+            len -= bytesRead;
+            break readLoop;
           }
           break;
         case WAITING_FOR_CR:

@@ -5,11 +5,11 @@ import java.nio.charset.CharsetDecoder;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
-public class LenParser<T> implements Parser<T> {
+class LenParser<T> implements Parser<T> {
   private final IntFunction<Parser<T>> bodyParserFactory;
   private final LongParser lengthParser;
 
-  public LenParser(IntFunction<Parser<T>> bodyParserFactory) {
+  LenParser(IntFunction<Parser<T>> bodyParserFactory) {
     this(bodyParserFactory, LongParser.PARSER);
   }
 
