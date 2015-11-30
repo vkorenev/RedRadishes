@@ -3,6 +3,7 @@ package redradishes.decoder.parser;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public interface ReplyParser<T> {
@@ -21,6 +22,11 @@ public interface ReplyParser<T> {
             partial -> partialReplyHandler.partialReply(partial.map(mapper)), failureHandler, charsetDecoder);
       }
     };
+  }
+
+  static <T1, T2, R> ReplyParser<R> combine(ReplyParser<? extends T1> parser1, ReplyParser<? extends T2> parser2,
+      BiFunction<? super T1, ? super T2, ? extends R> fn) {
+    return new CombiningReplyParser<>(parser1, parser2, fn);
   }
 
   interface PartialReplyHandler<T, U> extends Parser.PartialHandler<T, U> {
