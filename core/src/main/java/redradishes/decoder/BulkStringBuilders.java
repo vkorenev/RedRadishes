@@ -30,6 +30,7 @@ public class BulkStringBuilders {
           return bytes;
         }
       };
+
   private static final BulkStringBuilderFactory<CharSequence> CHAR_SEQUENCE_BUILDER_FACTORY =
       (length, charsetDecoder) -> new BulkStringBuilderFactory.Builder<CharSequence>() {
         private final CharBuffer charBuffer = CharBuffer.allocate((int) (length * charsetDecoder.maxCharsPerByte()));
@@ -62,6 +63,9 @@ public class BulkStringBuilders {
           }
         }
       };
+
+  private static final BulkStringBuilderFactory<String> STRING_BUILDER_FACTORY =
+      CHAR_SEQUENCE_BUILDER_FACTORY.map(Object::toString);
 
   private static final int SIGN_OR_DIGIT = 0;
   private static final int DIGIT = 1;
@@ -141,7 +145,7 @@ public class BulkStringBuilders {
   }
 
   public static BulkStringBuilderFactory<String> string() {
-    return CHAR_SEQUENCE_BUILDER_FACTORY.map(Object::toString);
+    return STRING_BUILDER_FACTORY;
   }
 
   public static BulkStringBuilderFactory<Integer> integer() {
