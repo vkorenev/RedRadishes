@@ -5,7 +5,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import redradishes.CommandList;
-import redradishes.CommandPair;
 import redradishes.RedisException;
 import redradishes.Request;
 import redradishes.commands.Command;
@@ -24,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.function.BiFunction;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.Matchers.allOf;
@@ -197,9 +195,9 @@ public class RedisClientTest {
 
   @Test
   public void canSendPairOfCommands() throws Exception {
-    assertThat(redisClient.send(new CommandPair<>(PING, PING,
-        (BiFunction<CharSequence, CharSequence, CharSequence>) (str1, str2) -> new StringBuilder(
-            str1.length() + str2.length()).append(str1).append(str2))).join(), hasSameContentAs("PONGPONG"));
+    assertThat(redisClient.send(
+        PING.combine(PING, (str1, str2) -> new StringBuilder(str1.length() + str2.length()).append(str1).append(str2)))
+        .join(), hasSameContentAs("PONGPONG"));
   }
 
   @Test
