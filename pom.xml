@@ -21,12 +21,12 @@
       <dependency>
         <groupId>org.jboss.xnio</groupId>
         <artifactId>xnio-api</artifactId>
-        <version>3.3.2.Final</version>
+        <version>3.3.3.Final</version>
       </dependency>
       <dependency>
         <groupId>org.jboss.xnio</groupId>
         <artifactId>xnio-nio</artifactId>
-        <version>3.3.2.Final</version>
+        <version>3.3.3.Final</version>
       </dependency>
       <dependency>
         <groupId>org.jboss.logging</groupId>
