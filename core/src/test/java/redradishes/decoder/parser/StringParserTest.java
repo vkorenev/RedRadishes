@@ -18,11 +18,11 @@ import java.util.Iterator;
 import java.util.function.Function;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
-import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static redradishes.decoder.parser.TestUtil.parse;
 import static redradishes.decoder.parser.TestUtil.split;
+import static redradishes.hamcrest.HasSameContentAs.hasSameContentAs;
 
 @RunWith(Theories.class)
 public class StringParserTest {
@@ -36,8 +36,7 @@ public class StringParserTest {
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     String value = s.replace('\r', ' ').replace('\n', ' ');
     Iterator<ByteBuffer> chunks = split((value + "\r\n").getBytes(US_ASCII), bufferSize);
-    assertThat(parse(chunks, StringParser.STRING_PARSER, Function.identity(), charsetDecoder).toString(),
-        equalTo(value));
+    assertThat(parse(chunks, StringParser.STRING_PARSER, Function.identity(), charsetDecoder), hasSameContentAs(value));
     verifyZeroInteractions(charsetDecoder);
   }
 }

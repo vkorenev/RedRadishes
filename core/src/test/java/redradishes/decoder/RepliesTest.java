@@ -41,6 +41,7 @@ import static redradishes.decoder.parser.TestUtil.split;
 import static redradishes.decoder.parser.TestUtil.throwingFailureHandler;
 import static redradishes.decoder.parser.TestUtil.writeByteString;
 import static redradishes.decoder.parser.TestUtil.writeLenPrefix;
+import static redradishes.hamcrest.HasSameContentAs.hasSameContentAs;
 
 @RunWith(Theories.class)
 public class RepliesTest {
@@ -100,8 +101,8 @@ public class RepliesTest {
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     String value = s.replace('\r', ' ').replace('\n', ' ');
     Iterator<ByteBuffer> chunks = split(("+" + value + "\r\n").getBytes(US_ASCII), bufferSize);
-    assertThat(parseReply(chunks, simpleStringReply(), Function.identity(), throwingFailureHandler(), charsetDecoder)
-        .toString(), equalTo(value));
+    assertThat(parseReply(chunks, simpleStringReply(), Function.identity(), throwingFailureHandler(), charsetDecoder),
+        hasSameContentAs(value));
     verifyZeroInteractions(charsetDecoder);
   }
 
@@ -222,7 +223,7 @@ public class RepliesTest {
     Iterator<ByteBuffer> chunks = split(("-" + value + "\r\n").getBytes(US_ASCII), bufferSize);
     assertThat(parseReply(chunks, parser, result -> {
       throw new RuntimeException("Unexpected result: " + result);
-    }, message -> message, charsetDecoder).toString(), equalTo(value));
+    }, message -> message, charsetDecoder), hasSameContentAs(value));
     verifyZeroInteractions(charsetDecoder);
   }
 }
