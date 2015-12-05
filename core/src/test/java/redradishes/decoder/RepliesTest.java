@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static redradishes.decoder.ArrayBuilders.array;
@@ -103,10 +104,9 @@ public class RepliesTest {
   @Theory
   public void parsesSimpleStringReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
-    String value = s.replace('\r', ' ').replace('\n', ' ');
-    Iterator<ByteBuffer> chunks = split(("+" + value + "\r\n").getBytes(US_ASCII), bufferSize);
+    Iterator<ByteBuffer> chunks = split(encodeAsSimpleString(s), bufferSize);
     assertThat(parseReply(chunks, simpleStringReply(), Function.identity(), throwingFailureHandler(), charsetDecoder),
-        hasSameContentAs(value));
+        hasSameContentAs(s));
     verifyZeroInteractions(charsetDecoder);
   }
 
@@ -223,11 +223,20 @@ public class RepliesTest {
   }
 
   private void parsesError(String error, int bufferSize, ReplyParser<?> parser) {
-    String value = error.replace('\r', ' ').replace('\n', ' ');
-    Iterator<ByteBuffer> chunks = split(("-" + value + "\r\n").getBytes(US_ASCII), bufferSize);
+    Iterator<ByteBuffer> chunks = split(encodeAsError(error), bufferSize);
     assertThat(parseReply(chunks, parser, result -> {
       throw new RuntimeException("Unexpected result: " + result);
-    }, e -> e, charsetDecoder), allOf(instanceOf(RedisException.class), hasMessage(equalTo(value))));
+    }, e -> e, charsetDecoder), allOf(instanceOf(RedisException.class), hasMessage(equalTo(error))));
     verifyZeroInteractions(charsetDecoder);
+  }
+
+  private static byte[] encodeAsSimpleString(String value) {
+    assumeTrue(value.indexOf('\r') == -1 && value.indexOf('\n') == -1);
+    return ("+" + value + "\r\n").getBytes(US_ASCII);
+  }
+
+  private static byte[] encodeAsError(String value) {
+    assumeTrue(value.indexOf('\r') == -1 && value.indexOf('\n') == -1);
+    return ("-" + value + "\r\n").getBytes(US_ASCII);
   }
 }
