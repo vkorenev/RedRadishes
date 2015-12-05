@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import redradishes.RedisException;
 import redradishes.ScanResult;
 import redradishes.decoder.parser.ReplyParser;
 
@@ -23,7 +24,9 @@ import java.util.Iterator;
 import java.util.function.Function;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -42,6 +45,7 @@ import static redradishes.decoder.parser.TestUtil.throwingFailureHandler;
 import static redradishes.decoder.parser.TestUtil.writeByteString;
 import static redradishes.decoder.parser.TestUtil.writeLenPrefix;
 import static redradishes.hamcrest.HasSameContentAs.hasSameContentAs;
+import static redradishes.hamcrest.ThrowableMessageMatcher.hasMessage;
 
 @RunWith(Theories.class)
 public class RepliesTest {
@@ -223,7 +227,7 @@ public class RepliesTest {
     Iterator<ByteBuffer> chunks = split(("-" + value + "\r\n").getBytes(US_ASCII), bufferSize);
     assertThat(parseReply(chunks, parser, result -> {
       throw new RuntimeException("Unexpected result: " + result);
-    }, message -> message, charsetDecoder), hasSameContentAs(value));
+    }, e -> e, charsetDecoder), allOf(instanceOf(RedisException.class), hasMessage(equalTo(value))));
     verifyZeroInteractions(charsetDecoder);
   }
 }

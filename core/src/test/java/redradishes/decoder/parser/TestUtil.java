@@ -53,8 +53,8 @@ public class TestUtil {
   }
 
   public static <T> FailureHandler<T> throwingFailureHandler() {
-    return message -> {
-      throw new RuntimeException(message.toString());
+    return e -> {
+      throw new RuntimeException(e);
     };
   }
 

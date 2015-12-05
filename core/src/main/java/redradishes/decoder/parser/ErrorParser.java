@@ -1,5 +1,7 @@
 package redradishes.decoder.parser;
 
+import redradishes.RedisException;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.util.function.Function;
@@ -25,7 +27,7 @@ public class ErrorParser<T> implements ReplyParser<T> {
 
   private <U> U doParse(ByteBuffer buffer, PartialReplyHandler<? super T, U> partialReplyHandler,
       FailureHandler<U> failureHandler, Parser<? extends CharSequence> errorParser, CharsetDecoder charsetDecoder) {
-    return errorParser.parse(buffer, failureHandler::failure,
+    return errorParser.parse(buffer, message -> failureHandler.failure(new RedisException(message.toString())),
         partial -> partialReplyHandler.partialReply(new ErrorParser<T>(partial)), charsetDecoder);
   }
 }
