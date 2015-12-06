@@ -69,8 +69,8 @@ public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable 
         }, partial -> {
           parser = partial;
           return false;
-        }, message -> {
-          completeExceptionally(future, new RedisException(message.toString()));
+        }, exception -> {
+          completeExceptionally(future, exception);
           return true;
         }, charsetDecoder);
       }

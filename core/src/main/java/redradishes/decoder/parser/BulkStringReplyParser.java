@@ -2,8 +2,10 @@ package redradishes.decoder.parser;
 
 import java.util.function.IntFunction;
 
-public class BulkStringReplyParser<T> extends SuccessOrFailureParser<T> {
+public class BulkStringReplyParser<T> extends AnyReplyParser<T> {
   public BulkStringReplyParser(IntFunction<Parser<T>> bodyParserFactory) {
-    super('$', new LenParser<>(bodyParserFactory));
+    super(new UnexpectedSimpleReplyParser<>("simple string"), new ErrorParser<>(),
+        new UnexpectedSimpleReplyParser<>("integer"), new LenParser<>(bodyParserFactory),
+        new UnexpectedArrayReplyParser<>());
   }
 }

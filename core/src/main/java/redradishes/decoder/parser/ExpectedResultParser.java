@@ -5,12 +5,12 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.util.function.Function;
 
-public class ExpectedResultParser<T> implements Parser<T> {
+class ExpectedResultParser<T> implements Parser<T> {
   private final byte[] expectedBytes;
   private final int pos0;
   private final T reply;
 
-  public ExpectedResultParser(byte[] expectedBytes, @Nullable T reply) {
+  ExpectedResultParser(byte[] expectedBytes, @Nullable T reply) {
     this(expectedBytes, 0, reply);
   }
 
@@ -37,5 +37,9 @@ public class ExpectedResultParser<T> implements Parser<T> {
       }
     }
     return resultHandler.apply(reply);
+  }
+
+  static <T> Parser<T> nilParser() {
+    return new ExpectedResultParser<>(new byte[]{'-', '1', '\r', '\n'}, null);
   }
 }

@@ -1,7 +1,10 @@
 package redradishes.decoder.parser;
 
-public class IntegerReplyParser<T> extends SuccessOrFailureParser<T> {
+import static redradishes.decoder.parser.ExpectedResultParser.nilParser;
+
+public class IntegerReplyParser<T> extends AnyReplyParser<T> {
   public IntegerReplyParser(Parser<T> parser) {
-    super(':', parser);
+    super(new UnexpectedSimpleReplyParser<>("simple string"), new ErrorParser<>(), parser, nilParser(),
+        new UnexpectedArrayReplyParser<>());
   }
 }

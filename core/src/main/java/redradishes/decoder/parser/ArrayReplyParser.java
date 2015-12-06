@@ -2,8 +2,11 @@ package redradishes.decoder.parser;
 
 import java.util.function.IntFunction;
 
-public class ArrayReplyParser<T> extends SuccessOrFailureParser<T> {
+import static redradishes.decoder.parser.ExpectedResultParser.nilParser;
+
+public class ArrayReplyParser<T> extends AnyReplyParser<T> {
   public ArrayReplyParser(IntFunction<Parser<T>> bodyParserFactory) {
-    super('*', new LenParser<>(bodyParserFactory));
+    super(new UnexpectedSimpleReplyParser<>("simple string"), new ErrorParser<>(),
+        new UnexpectedSimpleReplyParser<>("integer"), nilParser(), new LenParser<>(bodyParserFactory));
   }
 }

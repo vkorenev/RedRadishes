@@ -52,9 +52,15 @@ public class TestUtil {
         charsetDecoder);
   }
 
-  public static <T> FailureHandler<T> throwingFailureHandler() {
-    return message -> {
-      throw new RuntimeException(message.toString());
+  public static <T, R> Function<T, R> assertNoResult() {
+    return result -> {
+      throw new AssertionError("Unexpected result: " + result);
+    };
+  }
+
+  public static <T> FailureHandler<T> assertNoFailure() {
+    return e -> {
+      throw new AssertionError("Unexpected failure", e);
     };
   }
 

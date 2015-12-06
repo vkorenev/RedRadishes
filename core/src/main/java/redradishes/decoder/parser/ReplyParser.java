@@ -39,6 +39,6 @@ public interface ReplyParser<T> {
   }
 
   interface FailureHandler<U> {
-    U failure(CharSequence message);
+    U failure(Throwable e);
   }
 }
