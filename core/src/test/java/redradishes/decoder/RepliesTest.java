@@ -39,10 +39,11 @@ import static redradishes.decoder.Replies.integerReply;
 import static redradishes.decoder.Replies.longReply;
 import static redradishes.decoder.Replies.scanReply;
 import static redradishes.decoder.Replies.simpleStringReply;
+import static redradishes.decoder.parser.TestUtil.assertNoFailure;
+import static redradishes.decoder.parser.TestUtil.assertNoResult;
 import static redradishes.decoder.parser.TestUtil.getByteString;
 import static redradishes.decoder.parser.TestUtil.parseReply;
 import static redradishes.decoder.parser.TestUtil.split;
-import static redradishes.decoder.parser.TestUtil.throwingFailureHandler;
 import static redradishes.decoder.parser.TestUtil.writeByteString;
 import static redradishes.decoder.parser.TestUtil.writeLenPrefix;
 import static redradishes.hamcrest.HasSameContentAs.hasSameContentAs;
@@ -58,7 +59,7 @@ public class RepliesTest {
   @Theory
   public void parsesIntegerReply(@ForAll int num, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(encodeIntegerReply(num), bufferSize);
-    assertThat(parseReply(chunks, integerReply(), Function.identity(), throwingFailureHandler(), charsetDecoder),
+    assertThat(parseReply(chunks, integerReply(), Function.identity(), assertNoFailure(), charsetDecoder),
         equalTo(num));
     verifyZeroInteractions(charsetDecoder);
   }
@@ -66,8 +67,7 @@ public class RepliesTest {
   @Theory
   public void parsesNullIntegerReply(@TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(encodeNilBulkStringReply(), bufferSize);
-    assertThat(parseReply(chunks, integerReply(), Function.identity(), throwingFailureHandler(), charsetDecoder),
-        nullValue());
+    assertThat(parseReply(chunks, integerReply(), Function.identity(), assertNoFailure(), charsetDecoder), nullValue());
     verifyZeroInteractions(charsetDecoder);
   }
 
@@ -88,16 +88,14 @@ public class RepliesTest {
   @Theory
   public void parsesLongReply(@ForAll long num, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(encodeIntegerReply(num), bufferSize);
-    assertThat(parseReply(chunks, longReply(), Function.identity(), throwingFailureHandler(), charsetDecoder),
-        equalTo(num));
+    assertThat(parseReply(chunks, longReply(), Function.identity(), assertNoFailure(), charsetDecoder), equalTo(num));
     verifyZeroInteractions(charsetDecoder);
   }
 
   @Theory
   public void parsesNullLongReply(@TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(encodeNilBulkStringReply(), bufferSize);
-    assertThat(parseReply(chunks, longReply(), Function.identity(), throwingFailureHandler(), charsetDecoder),
-        nullValue());
+    assertThat(parseReply(chunks, longReply(), Function.identity(), assertNoFailure(), charsetDecoder), nullValue());
     verifyZeroInteractions(charsetDecoder);
   }
 
@@ -119,7 +117,7 @@ public class RepliesTest {
   public void parsesSimpleStringReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(encodeAsSimpleString(s), bufferSize);
-    assertThat(parseReply(chunks, simpleStringReply(), Function.identity(), throwingFailureHandler(), charsetDecoder),
+    assertThat(parseReply(chunks, simpleStringReply(), Function.identity(), assertNoFailure(), charsetDecoder),
         hasSameContentAs(s));
     verifyZeroInteractions(charsetDecoder);
   }
@@ -127,7 +125,7 @@ public class RepliesTest {
   @Theory
   public void parsesNullStringReply(@TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(encodeNilBulkStringReply(), bufferSize);
-    assertThat(parseReply(chunks, simpleStringReply(), Function.identity(), throwingFailureHandler(), charsetDecoder),
+    assertThat(parseReply(chunks, simpleStringReply(), Function.identity(), assertNoFailure(), charsetDecoder),
         nullValue());
     verifyZeroInteractions(charsetDecoder);
   }
@@ -141,8 +139,9 @@ public class RepliesTest {
   @Theory
   public void parsesBulkStringReply(@ForAll byte[] bytes, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(getByteString(bytes), bufferSize);
-    assertThat(parseReply(chunks, bulkStringReply(new TestBulkStringBuilderFactory()), Function.identity(),
-        throwingFailureHandler(), charsetDecoder), equalTo(bytes));
+    assertThat(
+        parseReply(chunks, bulkStringReply(new TestBulkStringBuilderFactory()), Function.identity(), assertNoFailure(),
+            charsetDecoder), equalTo(bytes));
     verifyZeroInteractions(charsetDecoder);
   }
 
@@ -150,9 +149,8 @@ public class RepliesTest {
   public void parsesNullBulkStringReply(@TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(encodeNilBulkStringReply(), bufferSize);
     BulkStringBuilderFactory<?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
-    assertThat(
-        parseReply(chunks, bulkStringReply(bulkStringBuilderFactory), Function.identity(), throwingFailureHandler(),
-            charsetDecoder), nullValue());
+    assertThat(parseReply(chunks, bulkStringReply(bulkStringBuilderFactory), Function.identity(), assertNoFailure(),
+        charsetDecoder), nullValue());
     verifyZeroInteractions(charsetDecoder);
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
@@ -194,7 +192,7 @@ public class RepliesTest {
     Iterator<ByteBuffer> chunks = split(out.toByteArray(), bufferSize);
     assertThat(
         parseReply(chunks, arrayReply(array(byte[][]::new), new TestBulkStringBuilderFactory()), Function.identity(),
-            throwingFailureHandler(), charsetDecoder), equalTo(arrays));
+            assertNoFailure(), charsetDecoder), equalTo(arrays));
     verifyZeroInteractions(charsetDecoder);
   }
 
@@ -206,7 +204,7 @@ public class RepliesTest {
     @SuppressWarnings("unchecked") BulkStringBuilderFactory<E> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);
     assertThat(parseReply(chunks, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory), Function.identity(),
-        throwingFailureHandler(), charsetDecoder), nullValue());
+        assertNoFailure(), charsetDecoder), nullValue());
     verifyZeroInteractions(charsetDecoder);
     verifyZeroInteractions(arrayBuilderFactory);
     verifyZeroInteractions(bulkStringBuilderFactory);
@@ -260,7 +258,7 @@ public class RepliesTest {
     Iterator<ByteBuffer> chunks = split(out.toByteArray(), bufferSize);
     ScanResult<byte[][]> scanResult =
         parseReply(chunks, scanReply(array(byte[][]::new), new TestBulkStringBuilderFactory()), Function.identity(),
-            throwingFailureHandler(), charsetDecoder);
+            assertNoFailure(), charsetDecoder);
     assertThat(scanResult.cursor, equalTo(cursor));
     assertThat(scanResult.elements, equalTo(elements));
     verifyZeroInteractions(charsetDecoder);
@@ -279,16 +277,14 @@ public class RepliesTest {
 
   private void parsesError(String error, int bufferSize, ReplyParser<?> parser) {
     Iterator<ByteBuffer> chunks = split(encodeAsError(error), bufferSize);
-    assertThat(parseReply(chunks, parser, result -> {
-      throw new RuntimeException("Unexpected result: " + result);
-    }, e -> e, charsetDecoder), allOf(instanceOf(RedisException.class), hasMessage(equalTo(error))));
+    assertThat(parseReply(chunks, parser, assertNoResult(), e -> e, charsetDecoder),
+        allOf(instanceOf(RedisException.class), hasMessage(equalTo(error))));
     verifyZeroInteractions(charsetDecoder);
   }
 
-  private void failsToParseReply(Iterator<ByteBuffer> chunks, ReplyParser<?> parser, String message) {
-    assertThat(parseReply(chunks, parser, result -> {
-      throw new RuntimeException("Unexpected result: " + result);
-    }, e -> e, charsetDecoder), allOf(instanceOf(ReplyParseException.class), hasMessage(equalTo(message))));
+  private <T> void failsToParseReply(Iterator<ByteBuffer> chunks, ReplyParser<T> parser, String message) {
+    assertThat(parseReply(chunks, parser, assertNoResult(), e -> e, charsetDecoder),
+        allOf(instanceOf(ReplyParseException.class), hasMessage(equalTo(message))));
     verifyZeroInteractions(charsetDecoder);
   }
 

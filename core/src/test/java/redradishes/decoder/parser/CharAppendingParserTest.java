@@ -30,9 +30,10 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static redradishes.decoder.parser.CharAppendingParser.CHAR_SEQUENCE_PARSER;
+import static redradishes.decoder.parser.TestUtil.assertNoFailure;
+import static redradishes.decoder.parser.TestUtil.assertNoResult;
 import static redradishes.decoder.parser.TestUtil.parseReply;
 import static redradishes.decoder.parser.TestUtil.split;
-import static redradishes.decoder.parser.TestUtil.throwingFailureHandler;
 import static redradishes.hamcrest.HasSameContentAs.hasSameContentAs;
 
 @RunWith(Theories.class)
@@ -47,7 +48,7 @@ public class CharAppendingParserTest {
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     String value = s.replace('\r', ' ').replace('\n', ' ');
     Iterator<ByteBuffer> chunks = split((value + "\r\n").getBytes(US_ASCII), bufferSize);
-    assertThat(parseReply(chunks, CHAR_SEQUENCE_PARSER, Function.identity(), throwingFailureHandler(), charsetDecoder),
+    assertThat(parseReply(chunks, CHAR_SEQUENCE_PARSER, Function.identity(), assertNoFailure(), charsetDecoder),
         hasSameContentAs(value));
     verifyZeroInteractions(charsetDecoder);
   }
@@ -62,9 +63,9 @@ public class CharAppendingParserTest {
     RuntimeException e1 = new RuntimeException();
     RuntimeException e2 = new RuntimeException();
     when(appendable.append(anyChar())).thenThrow(e1, e2);
-    assertThat(parseReply(chunks, new CharAppendingParser<>(() -> appendable), result -> {
-      throw new RuntimeException("Unexpected result: " + result);
-    }, e -> e, charsetDecoder), equalTo(e1));
+    assertThat(
+        parseReply(chunks, new CharAppendingParser<>(() -> appendable), assertNoResult(), e -> e, charsetDecoder),
+        equalTo(e1));
     verifyZeroInteractions(charsetDecoder);
     verify(appendable, times(value.length())).append(anyChar());
     verifyNoMoreInteractions(appendable);
