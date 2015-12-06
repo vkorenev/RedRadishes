@@ -11,18 +11,18 @@ import redradishes.decoder.parser.ScanReplyParser;
 import redradishes.decoder.parser.SeqParser;
 import redradishes.decoder.parser.SimpleStringReplyParser;
 
+import static redradishes.decoder.parser.CharAppendingParser.CHAR_SEQUENCE_PARSER;
 import static redradishes.decoder.parser.LongParser.INTEGER_PARSER;
 import static redradishes.decoder.parser.LongParser.LONG_PARSER;
 import static redradishes.decoder.parser.RespParsers.bulkStringParser;
 import static redradishes.decoder.parser.SeqParser.seq;
-import static redradishes.decoder.parser.StringParser.STRING_PARSER;
 
 public class Replies {
 
   private static final IntegerReplyParser<Integer> INTEGER_REPLY_PARSER = new IntegerReplyParser<>(INTEGER_PARSER);
   private static final IntegerReplyParser<Long> LONG_REPLY_PARSER = new IntegerReplyParser<>(LONG_PARSER);
   private static final SimpleStringReplyParser<CharSequence> SIMPLE_STRING_REPLY_PARSER =
-      new SimpleStringReplyParser<>(STRING_PARSER);
+      new SimpleStringReplyParser<>(CHAR_SEQUENCE_PARSER);
 
   public static IntegerReplyParser<Integer> integerReply() {
     return INTEGER_REPLY_PARSER;
