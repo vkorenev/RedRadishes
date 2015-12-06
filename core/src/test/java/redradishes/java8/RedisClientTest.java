@@ -194,10 +194,20 @@ public class RedisClientTest {
   }
 
   @Test
-  public void canSendPairOfCommands() throws Exception {
+  public void combinesCommands() {
     assertThat(redisClient.send(
         PING.combine(PING, (str1, str2) -> new StringBuilder(str1.length() + str2.length()).append(str1).append(str2)))
         .join(), hasSameContentAs("PONGPONG"));
+  }
+
+  @Test
+  public void combinesCommandsIgnoringFirst() {
+    assertThat(redisClient.send(ECHO.apply("123").combineIgnoringSecond(PING)).join(), hasSameContentAs("PONG"));
+  }
+
+  @Test
+  public void combinesCommandsIgnoringSecond() {
+    assertThat(redisClient.send(PING.combineIgnoringFirst(ECHO.apply("123"))).join(), hasSameContentAs("PONG"));
   }
 
   @Test
