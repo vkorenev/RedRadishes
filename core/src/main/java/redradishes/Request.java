@@ -24,4 +24,12 @@ public interface Request<T> {
       }
     };
   }
+
+  default <U> Request<T> combineIgnoringFirst(Request<U> other) {
+    return combine(other, (a, b) -> a);
+  }
+
+  default <U> Request<U> combineIgnoringSecond(Request<U> other) {
+    return combine(other, (a, b) -> b);
+  }
 }
