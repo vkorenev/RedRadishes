@@ -10,8 +10,10 @@ import org.xnio.Buffers;
 import org.xnio.ByteBufferSlicePool;
 import org.xnio.Pool;
 
+import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.channels.GatheringByteChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,15 +21,15 @@ import java.util.function.Consumer;
 
 import static java.lang.Integer.min;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.emptyArray;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertTrue;
 import static org.xnio.BufferAllocator.DIRECT_BYTE_BUFFER_ALLOCATOR;
 
 @RunWith(Theories.class)
 public class ByteBufferBundleTest {
   @Theory
   public void writes(@ForAll byte[][] messages, @TestedOn(ints = {7, 10}) int writeChunk,
-      @TestedOn(ints = {7, 10, 13}) int readChunk) {
+      @TestedOn(ints = {7, 10, 13}) int readChunk) throws IOException {
     List<byte[]> receivedMessages = new ArrayList<>();
 
     Pool<ByteBuffer> byteBufferPool = new ByteBufferSlicePool(DIRECT_BYTE_BUFFER_ALLOCATOR, 10, 1000);
@@ -35,38 +37,33 @@ public class ByteBufferBundleTest {
     for (byte[] message : messages) {
       write(message, byteBufferBundle, writeChunk);
 
-      byteBufferBundle.startReading();
-      try {
-        ByteBuffer[] readBuffers = byteBufferBundle.getReadBuffers();
-        int remaining = remaining(readBuffers);
+      byteBufferBundle.writeTo((SimpleGatheringByteChannel) (srcs, offset, length) -> {
+        int remaining = remaining(srcs, offset, length);
         if (remaining > readChunk) {
-          read(readBuffers, receivedMessages::add, readChunk);
+          return read(srcs, offset, length, receivedMessages::add, readChunk);
+        } else {
+          return 0;
         }
-      } finally {
-        byteBufferBundle.startWriting();
-      }
+      });
     }
 
-    byteBufferBundle.startReading();
-    try {
-      ByteBuffer[] readBuffers = byteBufferBundle.getReadBuffers();
-      read(readBuffers, receivedMessages::add, remaining(readBuffers));
-    } finally {
-      byteBufferBundle.startWriting();
-    }
+    byteBufferBundle.writeTo(
+        (SimpleGatheringByteChannel) (srcs, offset, length) -> read(srcs, offset, length, receivedMessages::add,
+            remaining(srcs, offset, length)));
 
     assertThat(Bytes.concat(messages), equalTo(Bytes.concat(receivedMessages.stream().toArray(byte[][]::new))));
-    assertThat(byteBufferBundle.getReadBuffers(), emptyArray());
+    assertTrue(byteBufferBundle.isEmpty());
   }
 
-  private int remaining(ByteBuffer[] readBuffers) {
-    return Arrays.stream(readBuffers).mapToInt(Buffer::remaining).sum();
+  private int remaining(ByteBuffer[] readBuffers, int offset, int length) {
+    return Arrays.stream(readBuffers, offset, offset + length).mapToInt(Buffer::remaining).sum();
   }
 
-  private void read(ByteBuffer[] readBuffers, Consumer<byte[]> consumer, int readLen) {
+  private int read(ByteBuffer[] readBuffers, int offset, int length, Consumer<byte[]> consumer, int readLen) {
     byte[] dest = new byte[readLen];
-    Buffers.copy(ByteBuffer.wrap(dest), readBuffers, 0, readBuffers.length);
+    int copied = Buffers.copy(ByteBuffer.wrap(dest), readBuffers, offset, length);
     consumer.accept(dest);
+    return copied;
   }
 
   private void write(byte[] message, ByteBufferBundle byteBufferBundle, int writeChunk) {
@@ -80,6 +77,27 @@ public class ByteBufferBundleTest {
       }
       buffer.put(message, bytesWritten, writeLen);
       bytesWritten += writeLen;
+    }
+  }
+
+  private interface SimpleGatheringByteChannel extends GatheringByteChannel {
+    @Override
+    default long write(ByteBuffer[] srcs) throws IOException {
+      return write(srcs, 0, srcs.length);
+    }
+
+    @Override
+    default int write(ByteBuffer src) throws IOException {
+      return (int) write(new ByteBuffer[]{src});
+    }
+
+    @Override
+    default boolean isOpen() {
+      return true;
+    }
+
+    @Override
+    default void close() throws IOException {
     }
   }
 }

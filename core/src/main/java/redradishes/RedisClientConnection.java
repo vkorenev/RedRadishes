@@ -59,14 +59,9 @@ class RedisClientConnection {
             decoderQueue.add(command);
             command.writeTo(sink);
           }
-          byteBufferBundle.startReading();
-          try {
-            long bytesWritten = outChannel.write(byteBufferBundle.getReadBuffers());
-            if (bytesWritten == 0) {
-              return;
-            }
-          } finally {
-            byteBufferBundle.startWriting();
+          long bytesWritten = byteBufferBundle.writeTo(outChannel);
+          if (bytesWritten == 0) {
+            return;
           }
         }
       } catch (Throwable e) {

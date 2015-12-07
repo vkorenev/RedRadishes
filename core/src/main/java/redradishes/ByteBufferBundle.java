@@ -3,7 +3,9 @@ package redradishes;
 import org.xnio.Pool;
 import org.xnio.Pooled;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.GatheringByteChannel;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -43,18 +45,27 @@ class ByteBufferBundle {
     return pooledBuffer.getResource();
   }
 
-  void startReading() {
+  long writeTo(GatheringByteChannel channel) throws IOException {
+    startReading();
+    try {
+      return channel.write(getReadBuffers());
+    } finally {
+      startWriting();
+    }
+  }
+
+  private void startReading() {
     if (currentWriteBuffer != null) {
       currentWriteBuffer.flip();
     }
     currentWriteBuffer = null;
   }
 
-  ByteBuffer[] getReadBuffers() {
+  private ByteBuffer[] getReadBuffers() {
     return allocated.stream().map(Pooled::getResource).toArray(ByteBuffer[]::new);
   }
 
-  void startWriting() {
+  private void startWriting() {
     Iterator<Pooled<ByteBuffer>> iterator = allocated.iterator();
     while (iterator.hasNext()) {
       Pooled<ByteBuffer> pooledBuffer = iterator.next();
