@@ -69,7 +69,7 @@ class RedisClientConnection {
             byteBufferBundle.startWriting();
           }
         }
-      } catch (IOException e) {
+      } catch (Throwable e) {
         if (currentDecoder != null) {
           currentDecoder.fail(e);
         }
