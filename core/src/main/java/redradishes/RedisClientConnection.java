@@ -16,6 +16,8 @@ import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import static org.xnio.channels.Channels.resumeWritesAsync;
+
 class RedisClientConnection {
   private final BlockingQueue<ReplyDecoder> decoderQueue = new LinkedBlockingQueue<>();
   private final StreamSinkChannel outChannel;
@@ -102,7 +104,7 @@ class RedisClientConnection {
   }
 
   void commandAdded() {
-    outChannel.resumeWrites();
+    resumeWritesAsync(outChannel);
   }
 
   public void close() {
