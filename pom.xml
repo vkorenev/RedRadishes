@@ -7,6 +7,29 @@
   <artifactId>redradishes-parent</artifactId>
   <version>0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
+  <description>Asynchronous Redis Client for Java</description>
+  <url>https://github.com/vkorenev/RedRadishes</url>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <connection>scm:git:git@github.com:vkorenev/RedRadishes.git</connection>
+    <developerConnection>scm:git:git@github.com:vkorenev/RedRadishes.git</developerConnection>
+    <tag>HEAD</tag>
+    <url>https://github.com/vkorenev/RedRadishes</url>
+  </scm>
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/vkorenev/RedRadishes/issues</url>
+  </issueManagement>
+  <ciManagement>
+    <system>Travis CI</system>
+    <url>https://travis-ci.org/vkorenev/RedRadishes</url>
+  </ciManagement>
   <modules>
     <module>core</module>
   </modules>
