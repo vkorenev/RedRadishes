@@ -20,7 +20,7 @@ import static org.xnio.channels.Channels.resumeWritesAsync;
 
 class RedisClientConnection {
   private final BlockingQueue<ReplyDecoder> decoderQueue = new LinkedBlockingQueue<>();
-  private final StreamSinkChannel outChannel;
+  private final StreamSinkChannel sinkChannel;
   private ReplyDecoder currentDecoder;
 
   RedisClientConnection(StreamConnection connection, Pool<ByteBuffer> bufferPool, Charset charset,
@@ -51,8 +51,8 @@ class RedisClientConnection {
     });
     sourceChannel.resumeReads();
     ByteBufferBundle byteBufferBundle = new ByteBufferBundle(bufferPool);
-    this.outChannel = connection.getSinkChannel();
-    this.outChannel.getWriteSetter().set(outChannel -> {
+    this.sinkChannel = connection.getSinkChannel();
+    this.sinkChannel.getWriteSetter().set(outChannel -> {
       try {
         while (!commandsQueue.isEmpty() || !byteBufferBundle.isEmpty()) {
           ByteSink sink = new ByteBufferSink(byteBufferBundle);
@@ -104,7 +104,7 @@ class RedisClientConnection {
   }
 
   void commandAdded() {
-    resumeWritesAsync(outChannel);
+    resumeWritesAsync(sinkChannel);
   }
 
   public void close() {
