@@ -2,16 +2,14 @@ package redradishes.java8;
 
 import org.xnio.BufferAllocator;
 import org.xnio.ByteBufferSlicePool;
-import org.xnio.IoFuture;
 import org.xnio.OptionMap;
 import org.xnio.Options;
 import org.xnio.Pool;
-import org.xnio.StreamConnection;
 import org.xnio.Xnio;
 import org.xnio.XnioWorker;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
@@ -27,9 +25,8 @@ public class RedisClientFactory implements AutoCloseable {
     worker = xnio.createWorker(OptionMap.create(Options.WORKER_IO_THREADS, ioThreads));
   }
 
-  public RedisClient connect(InetSocketAddress address) {
-    IoFuture<StreamConnection> streamConnectionFuture = worker.openStreamConnection(address, null, OptionMap.EMPTY);
-    return new RedisClient(streamConnectionFuture, byteBufferPool, charset);
+  public RedisClient connect(SocketAddress address) {
+    return new RedisClient(worker, address, byteBufferPool, charset);
   }
 
   @Override

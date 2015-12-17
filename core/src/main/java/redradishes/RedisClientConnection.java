@@ -1,6 +1,7 @@
 package redradishes;
 
 import com.google.common.base.Throwables;
+import org.xnio.IoUtils;
 import org.xnio.Pool;
 import org.xnio.Pooled;
 import org.xnio.StreamConnection;
@@ -20,13 +21,14 @@ import static org.xnio.channels.Channels.resumeWritesAsync;
 
 class RedisClientConnection {
   private final BlockingQueue<ReplyDecoder> decoderQueue = new LinkedBlockingQueue<>();
-  private final StreamSinkChannel outChannel;
+  private final StreamSinkChannel sinkChannel;
   private ReplyDecoder currentDecoder;
 
   RedisClientConnection(StreamConnection connection, Pool<ByteBuffer> bufferPool, Charset charset,
       BlockingQueue<CommandEncoderDecoder> commandsQueue) {
     CharsetDecoder charsetDecoder = charset.newDecoder();
     StreamSourceChannel sourceChannel = connection.getSourceChannel();
+    this.sinkChannel = connection.getSinkChannel();
     sourceChannel.getReadSetter().set(inChannel -> {
       try (Pooled<ByteBuffer> pooledByteBuffer = bufferPool.allocate()) {
         ByteBuffer readBuffer = pooledByteBuffer.getResource();
@@ -43,16 +45,18 @@ class RedisClientConnection {
           }
         }
       } catch (Throwable e) {
-        if (currentDecoder != null) {
-          currentDecoder.fail(e);
-        }
-        decoderQueue.forEach(decoder -> decoder.fail(e));
+        IoUtils.safeClose(sinkChannel);
+        IoUtils.safeClose(inChannel);
+        failUnfinished(e);
       }
+    });
+    sourceChannel.getCloseSetter().set(inChannel -> {
+      IoUtils.safeClose(sinkChannel);
+      failUnfinished(new IOException("Server closed connection"));
     });
     sourceChannel.resumeReads();
     ByteBufferBundle byteBufferBundle = new ByteBufferBundle(bufferPool);
-    this.outChannel = connection.getSinkChannel();
-    this.outChannel.getWriteSetter().set(outChannel -> {
+    this.sinkChannel.getWriteSetter().set(outChannel -> {
       try {
         while (!commandsQueue.isEmpty() || !byteBufferBundle.isEmpty()) {
           ByteSink sink = new ByteBufferSink(byteBufferBundle);
@@ -67,13 +71,22 @@ class RedisClientConnection {
           }
         }
       } catch (Throwable e) {
-        if (currentDecoder != null) {
-          currentDecoder.fail(e);
-        }
-        decoderQueue.forEach(decoder -> decoder.fail(e));
+        IoUtils.safeClose(sinkChannel);
+        failUnfinished(e);
       }
       outChannel.suspendWrites();
     });
+  }
+
+  private void failUnfinished(Throwable e) {
+    if (currentDecoder != null) {
+      currentDecoder.fail(e);
+      currentDecoder = null;
+    }
+    ReplyDecoder decoder;
+    while ((decoder = decoderQueue.poll()) != null) {
+      decoder.fail(e);
+    }
   }
 
   private ReplyDecoder decoder() {
@@ -104,7 +117,7 @@ class RedisClientConnection {
   }
 
   void commandAdded() {
-    resumeWritesAsync(outChannel);
+    resumeWritesAsync(sinkChannel);
   }
 
   public void close() {

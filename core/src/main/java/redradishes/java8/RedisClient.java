@@ -1,22 +1,22 @@
 package redradishes.java8;
 
-import org.xnio.IoFuture;
 import org.xnio.Pool;
-import org.xnio.StreamConnection;
+import org.xnio.XnioWorker;
 import redradishes.Request;
 import redradishes.XnioRedisClient;
 import redradishes.commands.Command1;
 import redradishes.commands.Command2;
 import redradishes.commands.Command3;
 
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 
 public class RedisClient extends XnioRedisClient<CompletableFuture, CompletableFuture> {
-  RedisClient(IoFuture<StreamConnection> streamConnectionFuture, Pool<ByteBuffer> bufferPool, Charset charset) {
-    super(streamConnectionFuture, bufferPool, charset);
+  RedisClient(XnioWorker worker, SocketAddress address, Pool<ByteBuffer> bufferPool, Charset charset) {
+    super(worker, address, bufferPool, charset);
   }
 
   @Override

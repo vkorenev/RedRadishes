@@ -2,13 +2,16 @@ package redradishes;
 
 import org.xnio.IoFuture;
 import org.xnio.IoUtils;
+import org.xnio.OptionMap;
 import org.xnio.Pool;
 import org.xnio.StreamConnection;
+import org.xnio.XnioWorker;
 import redradishes.RedisClientConnection.CommandEncoderDecoder;
 import redradishes.decoder.parser.ReplyParser;
 import redradishes.encoder.ByteSink;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
@@ -17,15 +20,19 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable {
   private final BlockingQueue<CommandEncoderDecoder> writerQueue = new LinkedBlockingQueue<>();
-  private final IoFuture<StreamConnection> streamConnectionFuture;
+  private volatile IoFuture<StreamConnection> streamConnectionFuture;
   private volatile RedisClientConnection redisClientConnection;
   private volatile IOException failure;
   private volatile boolean closed = false;
 
-  protected XnioRedisClient(IoFuture<StreamConnection> streamConnectionFuture, Pool<ByteBuffer> bufferPool,
-      Charset charset) {
-    this.streamConnectionFuture = streamConnectionFuture;
-    this.streamConnectionFuture.addNotifier(new IoFuture.HandlingNotifier<StreamConnection, Void>() {
+  protected XnioRedisClient(XnioWorker worker, SocketAddress address, Pool<ByteBuffer> bufferPool, Charset charset) {
+    this.streamConnectionFuture = openConnection(worker, address, bufferPool, charset);
+  }
+
+  private IoFuture<StreamConnection> openConnection(XnioWorker worker, SocketAddress address,
+      final Pool<ByteBuffer> bufferPool, final Charset charset) {
+    IoFuture<StreamConnection> connectionFuture = worker.openStreamConnection(address, null, OptionMap.EMPTY);
+    connectionFuture.addNotifier(new IoFuture.HandlingNotifier<StreamConnection, Void>() {
       @Override
       public void handleFailed(IOException exception, Void v) {
         failure = exception;
@@ -36,13 +43,19 @@ public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable 
       }
 
       @Override
-      public void handleDone(StreamConnection data, Void v) {
-        redisClientConnection = new RedisClientConnection(data, bufferPool, charset, writerQueue);
+      public void handleDone(StreamConnection connection, Void v) {
+        redisClientConnection = new RedisClientConnection(connection, bufferPool, charset, writerQueue);
         if (!writerQueue.isEmpty()) {
           redisClientConnection.commandAdded();
         }
+        connection.setCloseListener(streamConnection -> {
+          if (!closed) {
+            streamConnectionFuture = openConnection(worker, address, bufferPool, charset);
+          }
+        });
       }
     }, null);
+    return connectionFuture;
   }
 
   public <T> F send_(final Request<T> request) {
@@ -107,8 +120,5 @@ public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable 
   public void close() {
     closed = true;
     IoUtils.safeClose(streamConnectionFuture);
-    if (redisClientConnection != null) {
-      redisClientConnection.close();
-    }
   }
 }
