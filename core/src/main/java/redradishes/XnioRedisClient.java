@@ -107,8 +107,5 @@ public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable 
   public void close() {
     closed = true;
     IoUtils.safeClose(streamConnectionFuture);
-    if (redisClientConnection != null) {
-      redisClientConnection.close();
-    }
   }
 }
