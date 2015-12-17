@@ -20,7 +20,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable {
   private final BlockingQueue<CommandEncoderDecoder> writerQueue = new LinkedBlockingQueue<>();
-  private final IoFuture<StreamConnection> streamConnectionFuture;
+  private volatile IoFuture<StreamConnection> streamConnectionFuture;
   private volatile RedisClientConnection redisClientConnection;
   private volatile IOException failure;
   private volatile boolean closed = false;
@@ -48,6 +48,11 @@ public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable 
         if (!writerQueue.isEmpty()) {
           redisClientConnection.commandAdded();
         }
+        connection.setCloseListener(streamConnection -> {
+          if (!closed) {
+            streamConnectionFuture = openConnection(worker, address, bufferPool, charset);
+          }
+        });
       }
     }, null);
     return connectionFuture;
