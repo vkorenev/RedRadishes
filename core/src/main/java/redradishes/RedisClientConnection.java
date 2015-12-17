@@ -1,6 +1,7 @@
 package redradishes;
 
 import com.google.common.base.Throwables;
+import org.xnio.IoUtils;
 import org.xnio.Pool;
 import org.xnio.Pooled;
 import org.xnio.StreamConnection;
@@ -27,6 +28,7 @@ class RedisClientConnection {
       BlockingQueue<CommandEncoderDecoder> commandsQueue) {
     CharsetDecoder charsetDecoder = charset.newDecoder();
     StreamSourceChannel sourceChannel = connection.getSourceChannel();
+    this.sinkChannel = connection.getSinkChannel();
     sourceChannel.getReadSetter().set(inChannel -> {
       try (Pooled<ByteBuffer> pooledByteBuffer = bufferPool.allocate()) {
         ByteBuffer readBuffer = pooledByteBuffer.getResource();
@@ -43,15 +45,17 @@ class RedisClientConnection {
           }
         }
       } catch (Throwable e) {
-        if (currentDecoder != null) {
-          currentDecoder.fail(e);
-        }
-        decoderQueue.forEach(decoder -> decoder.fail(e));
+        IoUtils.safeClose(sinkChannel);
+        IoUtils.safeClose(inChannel);
+        failUnfinished(e);
       }
+    });
+    sourceChannel.getCloseSetter().set(inChannel -> {
+      IoUtils.safeClose(sinkChannel);
+      failUnfinished(new IOException("Server closed connection"));
     });
     sourceChannel.resumeReads();
     ByteBufferBundle byteBufferBundle = new ByteBufferBundle(bufferPool);
-    this.sinkChannel = connection.getSinkChannel();
     this.sinkChannel.getWriteSetter().set(outChannel -> {
       try {
         while (!commandsQueue.isEmpty() || !byteBufferBundle.isEmpty()) {
@@ -67,13 +71,22 @@ class RedisClientConnection {
           }
         }
       } catch (Throwable e) {
-        if (currentDecoder != null) {
-          currentDecoder.fail(e);
-        }
-        decoderQueue.forEach(decoder -> decoder.fail(e));
+        IoUtils.safeClose(sinkChannel);
+        failUnfinished(e);
       }
       outChannel.suspendWrites();
     });
+  }
+
+  private void failUnfinished(Throwable e) {
+    if (currentDecoder != null) {
+      currentDecoder.fail(e);
+      currentDecoder = null;
+    }
+    ReplyDecoder decoder;
+    while ((decoder = decoderQueue.poll()) != null) {
+      decoder.fail(e);
+    }
   }
 
   private ReplyDecoder decoder() {

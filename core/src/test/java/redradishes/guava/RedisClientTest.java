@@ -13,6 +13,7 @@ import redradishes.commands.Command1;
 import redradishes.commands.Command2;
 import redradishes.commands.Command3;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,6 +71,7 @@ public class RedisClientTest {
       command("DEL").withArg(arrayArg(strArg(UTF_8))).returning(integerReply());
   public static final Command<CharSequence> PING = command("PING").returning(simpleStringReply());
   public static final Command<CharSequence> FLUSHDB = command("FLUSHDB").returning(simpleStringReply());
+  public static final Command<CharSequence> QUIT = command("QUIT").returning(simpleStringReply());
   public static final Command1<CharSequence, CharSequence> ECHO =
       command("ECHO").withArg(strArg(UTF_8)).returning(bulkStringReply(charSequence()));
   public static final Command1<CharSequence, byte[]> GET =
@@ -183,6 +185,22 @@ public class RedisClientTest {
       Throwable cause = e.getCause();
       assertThat(cause, instanceOf(RedisException.class));
       assertThat(cause.getMessage(), equalTo("WRONGTYPE Operation against a key holding the wrong kind of value"));
+    }
+  }
+
+  @Test
+  public void serverClosesConnection() throws Exception {
+    ListenableFuture<CharSequence> pingResp = redisClient.send(PING);
+    ListenableFuture<CharSequence> quitResp = redisClient.send(QUIT);
+    ListenableFuture<CharSequence> pingAfterQuitResp = redisClient.send(PING);
+    assertThat(pingResp.get(), hasSameContentAs("PONG"));
+    assertThat(quitResp.get(), hasSameContentAs("OK"));
+    try {
+      pingAfterQuitResp.get();
+      fail();
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      assertThat(cause, instanceOf(IOException.class));
     }
   }
 

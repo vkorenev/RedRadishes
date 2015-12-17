@@ -12,6 +12,7 @@ import redradishes.commands.Command1;
 import redradishes.commands.Command2;
 import redradishes.commands.Command3;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,6 +71,7 @@ public class RedisClientTest {
       command("DEL").withArg(arrayArg(strArg(UTF_8))).returning(integerReply());
   public static final Command<CharSequence> PING = command("PING").returning(simpleStringReply());
   public static final Command<CharSequence> FLUSHDB = command("FLUSHDB").returning(simpleStringReply());
+  public static final Command<CharSequence> QUIT = command("QUIT").returning(simpleStringReply());
   public static final Command1<CharSequence, CharSequence> ECHO =
       command("ECHO").withArg(strArg(UTF_8)).returning(bulkStringReply(charSequence()));
   public static final Command1<CharSequence, byte[]> GET =
@@ -191,6 +193,23 @@ public class RedisClientTest {
   public void canSendListOfCommands() throws Exception {
     assertThat(redisClient.send(new CommandList<>(Arrays.<Request<CharSequence>>asList(PING, PING, PING))).join(),
         contains(hasSameContentAs("PONG"), hasSameContentAs("PONG"), hasSameContentAs("PONG")));
+  }
+
+  @Test
+  @SuppressWarnings({"unchecked", "varargs"})
+  public void serverClosesConnection() throws Exception {
+    CompletableFuture<CharSequence> pingResp = redisClient.send(PING);
+    CompletableFuture<CharSequence> quitResp = redisClient.send(QUIT);
+    CompletableFuture<CharSequence> pingAfterQuitResp = redisClient.send(PING);
+    assertThat(pingResp.join(), hasSameContentAs("PONG"));
+    assertThat(quitResp.join(), hasSameContentAs("OK"));
+    try {
+      pingAfterQuitResp.join();
+      fail();
+    } catch (CompletionException e) {
+      Throwable cause = e.getCause();
+      assertThat(cause, instanceOf(IOException.class));
+    }
   }
 
   @Test
