@@ -26,8 +26,13 @@ public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable 
   private volatile boolean closed = false;
 
   protected XnioRedisClient(XnioWorker worker, SocketAddress address, Pool<ByteBuffer> bufferPool, Charset charset) {
-    this.streamConnectionFuture = worker.openStreamConnection(address, null, OptionMap.EMPTY);
-    this.streamConnectionFuture.addNotifier(new IoFuture.HandlingNotifier<StreamConnection, Void>() {
+    this.streamConnectionFuture = openConnection(worker, address, bufferPool, charset);
+  }
+
+  private IoFuture<StreamConnection> openConnection(XnioWorker worker, SocketAddress address,
+      final Pool<ByteBuffer> bufferPool, final Charset charset) {
+    IoFuture<StreamConnection> connectionFuture = worker.openStreamConnection(address, null, OptionMap.EMPTY);
+    connectionFuture.addNotifier(new IoFuture.HandlingNotifier<StreamConnection, Void>() {
       @Override
       public void handleFailed(IOException exception, Void v) {
         failure = exception;
@@ -45,6 +50,7 @@ public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable 
         }
       }
     }, null);
+    return connectionFuture;
   }
 
   public <T> F send_(final Request<T> request) {
