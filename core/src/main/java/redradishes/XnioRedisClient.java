@@ -2,13 +2,16 @@ package redradishes;
 
 import org.xnio.IoFuture;
 import org.xnio.IoUtils;
+import org.xnio.OptionMap;
 import org.xnio.Pool;
 import org.xnio.StreamConnection;
+import org.xnio.XnioWorker;
 import redradishes.RedisClientConnection.CommandEncoderDecoder;
 import redradishes.decoder.parser.ReplyParser;
 import redradishes.encoder.ByteSink;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
@@ -22,9 +25,8 @@ public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable 
   private volatile IOException failure;
   private volatile boolean closed = false;
 
-  protected XnioRedisClient(IoFuture<StreamConnection> streamConnectionFuture, Pool<ByteBuffer> bufferPool,
-      Charset charset) {
-    this.streamConnectionFuture = streamConnectionFuture;
+  protected XnioRedisClient(XnioWorker worker, SocketAddress address, Pool<ByteBuffer> bufferPool, Charset charset) {
+    this.streamConnectionFuture = worker.openStreamConnection(address, null, OptionMap.EMPTY);
     this.streamConnectionFuture.addNotifier(new IoFuture.HandlingNotifier<StreamConnection, Void>() {
       @Override
       public void handleFailed(IOException exception, Void v) {
