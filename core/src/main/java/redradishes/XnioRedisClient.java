@@ -36,8 +36,8 @@ public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable 
       }
 
       @Override
-      public void handleDone(StreamConnection data, Void v) {
-        redisClientConnection = new RedisClientConnection(data, bufferPool, charset, writerQueue);
+      public void handleDone(StreamConnection connection, Void v) {
+        redisClientConnection = new RedisClientConnection(connection, bufferPool, charset, writerQueue);
         if (!writerQueue.isEmpty()) {
           redisClientConnection.commandAdded();
         }
