@@ -36,25 +36,25 @@ public class Replies {
     return SIMPLE_STRING_REPLY_PARSER;
   }
 
-  public static <T> BulkStringReplyParser<T> bulkStringReply(BulkStringBuilderFactory<? extends T> builderFactory) {
+  public static <T> BulkStringReplyParser<T> bulkStringReply(BulkStringBuilderFactory<?, ? extends T> builderFactory) {
     return new BulkStringReplyParser<>(len -> new BulkStringParser<>(len, builderFactory));
   }
 
   public static <E, T> ArrayReplyParser<T> arrayReply(ArrayBuilderFactory<E, ? extends T> arrayBuilderFactory,
-      BulkStringBuilderFactory<? extends E> elementBuilderFactory) {
+      BulkStringBuilderFactory<?, ? extends E> elementBuilderFactory) {
     Parser<E> elementParser = bulkStringParser(elementBuilderFactory);
     return new ArrayReplyParser<>(len -> new ArrayParser<>(len, arrayBuilderFactory, elementParser));
   }
 
   public static <K, V, T> ArrayReplyParser<T> mapReply(MapBuilderFactory<K, V, ? extends T> arrayBuilderFactory,
-      BulkStringBuilderFactory<? extends K> keyBuilderFactory,
-      BulkStringBuilderFactory<? extends V> valueBuilderFactory) {
+      BulkStringBuilderFactory<?, ? extends K> keyBuilderFactory,
+      BulkStringBuilderFactory<?, ? extends V> valueBuilderFactory) {
     SeqParser<K, V> kvParser = seq(bulkStringParser(keyBuilderFactory), bulkStringParser(valueBuilderFactory));
     return new ArrayReplyParser<>(len -> new ArrayAsMapParser<>(len / 2, arrayBuilderFactory, kvParser));
   }
 
   public static <E, T> ScanReplyParser<T> scanReply(ArrayBuilderFactory<E, ? extends T> arrayBuilderFactory,
-      BulkStringBuilderFactory<? extends E> elementBuilderFactory) {
+      BulkStringBuilderFactory<?, ? extends E> elementBuilderFactory) {
     Parser<E> elementParser = bulkStringParser(elementBuilderFactory);
     return new ScanReplyParser<>(len -> new ArrayParser<>(len, arrayBuilderFactory, elementParser));
   }

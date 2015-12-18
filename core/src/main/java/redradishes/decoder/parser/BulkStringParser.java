@@ -7,14 +7,14 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.util.function.Function;
 
-public class BulkStringParser<T> implements Parser<T> {
+public class BulkStringParser<T, B> implements Parser<T> {
   private static final int READING = 0;
   private static final int WAITING_FOR_CR = 1;
   private static final int WAITING_FOR_LF = 2;
-  private final BulkStringBuilderFactory<? extends T> builderFactory;
+  private final BulkStringBuilderFactory<B, ? extends T> builderFactory;
   private final int len;
 
-  public BulkStringParser(int len, BulkStringBuilderFactory<? extends T> builderFactory) {
+  public BulkStringParser(int len, BulkStringBuilderFactory<B, ? extends T> builderFactory) {
     this.len = len;
     this.builderFactory = builderFactory;
   }
@@ -27,8 +27,8 @@ public class BulkStringParser<T> implements Parser<T> {
   }
 
   private <U> U doParse(ByteBuffer buffer, Function<? super T, U> resultHandler,
-      PartialHandler<? super T, U> partialHandler, BulkStringBuilderFactory.Builder<? extends T> builder, int len,
-      int state, @Nullable T result, CharsetDecoder charsetDecoder) {
+      PartialHandler<? super T, U> partialHandler, B builder, int len, int state, @Nullable T result,
+      CharsetDecoder charsetDecoder) {
     readLoop:
     while (buffer.hasRemaining()) {
       switch (state) {
@@ -38,13 +38,13 @@ public class BulkStringParser<T> implements Parser<T> {
             ByteBuffer src = buffer.slice();
             src.limit(len);
             buffer.position(buffer.position() + len);
-            result = builder.appendLast(src, charsetDecoder);
+            result = builderFactory.appendLast(builder, src, charsetDecoder);
             if (src.hasRemaining()) {
               throw new IllegalStateException("Bulk string decoding error");
             }
             state = WAITING_FOR_CR;
           } else {
-            builder.append(buffer, charsetDecoder);
+            builder = builderFactory.append(builder, buffer, charsetDecoder);
             int bytesRead = remaining - buffer.remaining();
             len -= bytesRead;
             break readLoop;
@@ -65,6 +65,7 @@ public class BulkStringParser<T> implements Parser<T> {
           }
       }
     }
+    B builder1 = builder;
     int len1 = len;
     int state1 = state;
     T result1 = result;
@@ -72,7 +73,7 @@ public class BulkStringParser<T> implements Parser<T> {
       @Override
       public <U1> U1 parse(ByteBuffer buffer, Function<? super T, U1> resultHandler,
           PartialHandler<? super T, U1> partialHandler, CharsetDecoder charsetDecoder) {
-        return doParse(buffer, resultHandler, partialHandler, builder, len1, state1, result1, charsetDecoder);
+        return doParse(buffer, resultHandler, partialHandler, builder1, len1, state1, result1, charsetDecoder);
       }
     });
   }

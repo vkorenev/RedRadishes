@@ -148,7 +148,7 @@ public class RepliesTest {
   @Theory
   public void parsesNullBulkStringReply(@TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(encodeNilBulkStringReply(), bufferSize);
-    BulkStringBuilderFactory<?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
+    BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     assertThat(parseReply(chunks, bulkStringReply(bulkStringBuilderFactory), Function.identity(), assertNoFailure(),
         charsetDecoder), nullValue());
     verifyZeroInteractions(charsetDecoder);
@@ -158,7 +158,7 @@ public class RepliesTest {
   @Theory
   public void parsesErrorBulkStringReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
-    BulkStringBuilderFactory<?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
+    BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     parsesError(s, bufferSize, bulkStringReply(bulkStringBuilderFactory));
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
@@ -167,7 +167,7 @@ public class RepliesTest {
   public void failsToParseBulkStringReplyIfIntegerReplyIsFound(@ForAll long num,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(encodeIntegerReply(num), bufferSize);
-    BulkStringBuilderFactory<?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
+    BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     failsToParseReply(chunks, bulkStringReply(bulkStringBuilderFactory), "Unexpected integer reply");
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
@@ -177,7 +177,7 @@ public class RepliesTest {
       @ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(encodeAsSimpleString(s), bufferSize);
-    BulkStringBuilderFactory<?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
+    BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     failsToParseReply(chunks, bulkStringReply(bulkStringBuilderFactory), "Unexpected simple string reply");
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
@@ -201,7 +201,7 @@ public class RepliesTest {
     byte[] bytes = "*-1\r\n".getBytes(US_ASCII);
     Iterator<ByteBuffer> chunks = split(bytes, bufferSize);
     @SuppressWarnings("unchecked") ArrayBuilderFactory<E, ?> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
-    @SuppressWarnings("unchecked") BulkStringBuilderFactory<E> bulkStringBuilderFactory =
+    @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);
     assertThat(parseReply(chunks, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory), Function.identity(),
         assertNoFailure(), charsetDecoder), nullValue());
@@ -214,7 +214,7 @@ public class RepliesTest {
   public <E> void parsesErrorArrayReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     @SuppressWarnings("unchecked") ArrayBuilderFactory<E, ?> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
-    @SuppressWarnings("unchecked") BulkStringBuilderFactory<E> bulkStringBuilderFactory =
+    @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);
     parsesError(s, bufferSize, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory));
     verifyZeroInteractions(arrayBuilderFactory);
@@ -226,7 +226,7 @@ public class RepliesTest {
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(encodeIntegerReply(num), bufferSize);
     @SuppressWarnings("unchecked") ArrayBuilderFactory<E, ?> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
-    @SuppressWarnings("unchecked") BulkStringBuilderFactory<E> bulkStringBuilderFactory =
+    @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);
     failsToParseReply(chunks, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory), "Unexpected integer reply");
     verifyZeroInteractions(bulkStringBuilderFactory);
@@ -238,7 +238,7 @@ public class RepliesTest {
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     Iterator<ByteBuffer> chunks = split(encodeAsSimpleString(s), bufferSize);
     @SuppressWarnings("unchecked") ArrayBuilderFactory<E, ?> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
-    @SuppressWarnings("unchecked") BulkStringBuilderFactory<E> bulkStringBuilderFactory =
+    @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);
     failsToParseReply(chunks, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory),
         "Unexpected simple string reply");
@@ -268,7 +268,7 @@ public class RepliesTest {
   public <E> void parsesErrorScanReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     @SuppressWarnings("unchecked") ArrayBuilderFactory<E, ?> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
-    @SuppressWarnings("unchecked") BulkStringBuilderFactory<E> bulkStringBuilderFactory =
+    @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);
     parsesError(s, bufferSize, scanReply(arrayBuilderFactory, bulkStringBuilderFactory));
     verifyZeroInteractions(arrayBuilderFactory);
