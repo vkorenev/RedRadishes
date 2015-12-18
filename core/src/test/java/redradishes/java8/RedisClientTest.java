@@ -67,72 +67,72 @@ import static redradishes.hamcrest.HasSameContentAs.hasSameContentAs;
 public class RedisClientTest {
   private RedisClientFactory factory;
   private RedisClient redisClient;
-  public static final Command1<CharSequence[], Integer> DEL =
+  private static final Command1<CharSequence[], Integer> DEL =
       command("DEL").withArg(arrayArg(strArg(UTF_8))).returning(integerReply());
-  public static final Command<CharSequence> PING = command("PING").returning(simpleStringReply());
-  public static final Command<CharSequence> FLUSHDB = command("FLUSHDB").returning(simpleStringReply());
-  public static final Command<CharSequence> QUIT = command("QUIT").returning(simpleStringReply());
-  public static final Command1<CharSequence, CharSequence> ECHO =
+  private static final Command<CharSequence> PING = command("PING").returning(simpleStringReply());
+  private static final Command<CharSequence> FLUSHDB = command("FLUSHDB").returning(simpleStringReply());
+  private static final Command<CharSequence> QUIT = command("QUIT").returning(simpleStringReply());
+  private static final Command1<CharSequence, CharSequence> ECHO =
       command("ECHO").withArg(strArg(UTF_8)).returning(bulkStringReply(charSequence()));
-  public static final Command1<CharSequence, byte[]> GET =
+  private static final Command1<CharSequence, byte[]> GET =
       command("GET").withArg(strArg(UTF_8)).returning(bulkStringReply(byteArray()));
-  public static final Command1<CharSequence, List<CharSequence>> HKEYS =
+  private static final Command1<CharSequence, List<CharSequence>> HKEYS =
       command("HKEYS").withArg(strArg(UTF_8)).returning(arrayReply(collection(ArrayList::new), charSequence()));
-  public static final Command1<CharSequence, CharSequence[]> HKEYS_A =
+  private static final Command1<CharSequence, CharSequence[]> HKEYS_A =
       command("HKEYS").withArg(strArg(UTF_8)).returning(arrayReply(array(CharSequence[]::new), charSequence()));
-  public static final Command1<CharSequence, Map<String, CharSequence>> HGETALL =
+  private static final Command1<CharSequence, Map<String, CharSequence>> HGETALL =
       command("HGETALL").withArg(strArg(UTF_8)).returning(mapReply(map(HashMap::new), string(), charSequence()));
-  public static final Command1<CharSequence, Integer> HLEN =
+  private static final Command1<CharSequence, Integer> HLEN =
       command("HLEN").withArg(strArg(UTF_8)).returning(integerReply());
-  public static final Command1<CharSequence, Set<Long>> SMEMBERS =
+  private static final Command1<CharSequence, Set<Long>> SMEMBERS =
       command("SMEMBERS").withArg(strArg(UTF_8)).returning(arrayReply(collection(HashSet::new), _long()));
-  public static final Command1<CharSequence, List<Integer>> SMEMBERS_INTEGER_LIST =
+  private static final Command1<CharSequence, List<Integer>> SMEMBERS_INTEGER_LIST =
       command("SMEMBERS").withArg(strArg(UTF_8)).returning(arrayReply(collection(ArrayList::new), integer()));
-  public static final Command2<CharSequence, CharSequence[], Integer> HDEL =
+  private static final Command2<CharSequence, CharSequence[], Integer> HDEL =
       command("HDEL").withArg(strArg(UTF_8)).withArg(arrayArg(strArg(UTF_8))).returning(integerReply());
-  public static final Command2<CharSequence, CharSequence, CharSequence> HGET =
+  private static final Command2<CharSequence, CharSequence, CharSequence> HGET =
       command("HGET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).returning(bulkStringReply(charSequence()));
-  public static final Command2<CharSequence, CharSequence, byte[]> HGET_BYTES =
+  private static final Command2<CharSequence, CharSequence, byte[]> HGET_BYTES =
       command("HGET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).returning(bulkStringReply(byteArray()));
-  public static final Command2<CharSequence, CharSequence, Long> HGET_LONG =
+  private static final Command2<CharSequence, CharSequence, Long> HGET_LONG =
       command("HGET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).returning(bulkStringReply(_long()));
-  public static final Command2<CharSequence, CharSequence[], List<CharSequence>> HMGET =
+  private static final Command2<CharSequence, CharSequence[], List<CharSequence>> HMGET =
       command("HMGET").withArg(strArg(UTF_8)).withArg(arrayArg(strArg(UTF_8)))
           .returning(arrayReply(collection(ArrayList::new), charSequence()));
-  public static final Command2<CharSequence, Collection<CharSequence>, List<CharSequence>> HMGET2 =
+  private static final Command2<CharSequence, Collection<CharSequence>, List<CharSequence>> HMGET2 =
       command("HMGET").withArg(strArg(UTF_8)).withArg(collArg(strArg(UTF_8)))
           .returning(arrayReply(collection(ArrayList::new), charSequence()));
-  public static final Command2<CharSequence, Map<String, CharSequence>, CharSequence> HMSET =
+  private static final Command2<CharSequence, Map<String, CharSequence>, CharSequence> HMSET =
       command("HMSET").withArg(strArg(UTF_8)).withArg(mapArg(strArg(UTF_8), strArg(UTF_8)))
           .returning(simpleStringReply());
-  public static final Command2<CharSequence, Collection<Long>, Integer> SADD =
+  private static final Command2<CharSequence, Collection<Long>, Integer> SADD =
       command("SADD").withArg(strArg(UTF_8)).withArg(collArg(longArg())).returning(integerReply());
-  public static final Command2<CharSequence, long[], Integer> SADD_LONG_ARR =
+  private static final Command2<CharSequence, long[], Integer> SADD_LONG_ARR =
       command("SADD").withArg(strArg(UTF_8)).withArg(longArrayArg()).returning(integerReply());
-  public static final Command2<CharSequence, int[], Integer> SADD_INT_ARR =
+  private static final Command2<CharSequence, int[], Integer> SADD_INT_ARR =
       command("SADD").withArg(strArg(UTF_8)).withArg(intArrayArg()).returning(integerReply());
   public static final Command2<CharSequence, CharSequence, CharSequence> SET =
       command("SET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).returning(simpleStringReply());
-  public static final Command2<CharSequence, byte[], CharSequence> SET_BYTES =
+  private static final Command2<CharSequence, byte[], CharSequence> SET_BYTES =
       command("SET").withArg(strArg(UTF_8)).withArg(bytesArg()).returning(simpleStringReply());
-  public static final Command3<CharSequence, byte[], Integer, CharSequence> SET_BYTES_EX =
+  private static final Command3<CharSequence, byte[], Integer, CharSequence> SET_BYTES_EX =
       command("SET").withArg(strArg(UTF_8)).withArg(bytesArg()).withOption("EX").withArg(intArg())
           .returning(simpleStringReply());
   public static final Command2<CharSequence, Long, CharSequence> SET_LONG =
       command("SET").withArg(strArg(UTF_8)).withArg(longArg()).returning(simpleStringReply());
-  public static final Command2<CharSequence, byte[], Integer> SETNX =
+  private static final Command2<CharSequence, byte[], Integer> SETNX =
       command("SETNX").withArg(strArg(UTF_8)).withArg(bytesArg()).returning(integerReply());
-  public static final Command3<CharSequence, CharSequence, CharSequence, Integer> HSET =
+  private static final Command3<CharSequence, CharSequence, CharSequence, Integer> HSET =
       command("HSET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).returning(integerReply());
-  public static final Command3<CharSequence, CharSequence, byte[], Integer> HSET_BYTES =
+  private static final Command3<CharSequence, CharSequence, byte[], Integer> HSET_BYTES =
       command("HSET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).withArg(bytesArg()).returning(integerReply());
-  public static final Command3<CharSequence, CharSequence, Long, Integer> HSET_LONG =
+  private static final Command3<CharSequence, CharSequence, Long, Integer> HSET_LONG =
       command("HSET").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).withArg(longArg()).returning(integerReply());
-  public static final Command3<CharSequence, CharSequence, Long, Long> HINCRBY =
+  private static final Command3<CharSequence, CharSequence, Long, Long> HINCRBY =
       command("HINCRBY").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).withArg(longArg()).returning(longReply());
-  public static final Command3<? super CharSequence, Long, CharSequence, Integer> ZADD =
+  private static final Command3<? super CharSequence, Long, CharSequence, Integer> ZADD =
       command("ZADD").withArg(strArg(UTF_8)).withArg(longArg()).withArg(strArg(UTF_8)).returning(integerReply());
-  public static final Command2<CharSequence, CharSequence, Integer> ZRANK =
+  private static final Command2<CharSequence, CharSequence, Integer> ZRANK =
       command("ZRANK").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).returning(integerReply());
 
   @Before

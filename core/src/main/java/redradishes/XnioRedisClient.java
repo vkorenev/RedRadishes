@@ -58,7 +58,7 @@ public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable 
     return connectionFuture;
   }
 
-  public <T> F send_(final Request<T> request) {
+  protected <T> F send_(final Request<T> request) {
     if (closed) {
       return createCancelledFuture();
     }

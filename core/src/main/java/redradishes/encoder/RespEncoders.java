@@ -29,7 +29,7 @@ public class RespEncoders {
   private static final byte[] MIN_LONG_BYTES = "-9223372036854775808".getBytes(US_ASCII);
   private static final long[] SIZE_TABLE = LongStream.iterate(10, x -> x * 10).limit(18).map(x -> x - 1).toArray();
   private static final ConstExpr CR_LF = bytesConst(new byte[]{'\r', '\n'});
-  public static final ConstExpr MIN_LONG_BULK_STRING =
+  private static final ConstExpr MIN_LONG_BULK_STRING =
       charConst('2').append(charConst('0')).append(CR_LF).append(bytesConst(MIN_LONG_BYTES)).compact();
   private static final ConstExpr EMPTY_BULK_STRING = charConst('0').append(CR_LF).compact();
   private static final ThreadLocal<Map<Charset, CharsetEncoder>> charsetDecodersMap =
