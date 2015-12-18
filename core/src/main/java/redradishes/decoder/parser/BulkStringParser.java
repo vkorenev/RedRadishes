@@ -2,6 +2,7 @@ package redradishes.decoder.parser;
 
 import redradishes.decoder.BulkStringBuilderFactory;
 
+import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.util.function.Function;
@@ -21,12 +22,13 @@ public class BulkStringParser<T> implements Parser<T> {
   @Override
   public <U> U parse(ByteBuffer buffer, Function<? super T, U> resultHandler,
       PartialHandler<? super T, U> partialHandler, CharsetDecoder charsetDecoder) {
-    return doParse(buffer, resultHandler, partialHandler, builderFactory.create(len, charsetDecoder), len, READING);
+    return doParse(buffer, resultHandler, partialHandler, builderFactory.create(len, charsetDecoder), len, READING,
+        null);
   }
 
   private <U> U doParse(ByteBuffer buffer, Function<? super T, U> resultHandler,
       PartialHandler<? super T, U> partialHandler, BulkStringBuilderFactory.Builder<? extends T> builder, int len,
-      int state) {
+      int state, @Nullable T result) {
     readLoop:
     while (buffer.hasRemaining()) {
       switch (state) {
@@ -36,7 +38,7 @@ public class BulkStringParser<T> implements Parser<T> {
             ByteBuffer src = buffer.slice();
             src.limit(len);
             buffer.position(buffer.position() + len);
-            builder.appendLast(src);
+            result = builder.appendLast(src);
             if (src.hasRemaining()) {
               throw new IllegalStateException("Bulk string decoding error");
             }
@@ -57,7 +59,7 @@ public class BulkStringParser<T> implements Parser<T> {
           break;
         case WAITING_FOR_LF:
           if (buffer.get() == '\n') {
-            return resultHandler.apply(builder.build());
+            return resultHandler.apply(result);
           } else {
             throw new IllegalStateException("LF is expected");
           }
@@ -65,11 +67,12 @@ public class BulkStringParser<T> implements Parser<T> {
     }
     int len1 = len;
     int state1 = state;
+    T result1 = result;
     return partialHandler.partial(new Parser<T>() {
       @Override
       public <U1> U1 parse(ByteBuffer buffer, Function<? super T, U1> resultHandler,
           PartialHandler<? super T, U1> partialHandler, CharsetDecoder charsetDecoder) {
-        return doParse(buffer, resultHandler, partialHandler, builder, len1, state1);
+        return doParse(buffer, resultHandler, partialHandler, builder, len1, state1, result1);
       }
     });
   }

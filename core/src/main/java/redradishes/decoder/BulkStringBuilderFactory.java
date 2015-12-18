@@ -19,13 +19,8 @@ public interface BulkStringBuilderFactory<T> {
         }
 
         @Override
-        public void appendLast(ByteBuffer buffer) {
-          builder.appendLast(buffer);
-        }
-
-        @Override
-        public R build() {
-          return mapper.apply(builder.build());
+        public R appendLast(ByteBuffer buffer) {
+          return mapper.apply(builder.appendLast(buffer));
         }
       };
     };
@@ -34,8 +29,6 @@ public interface BulkStringBuilderFactory<T> {
   interface Builder<T> {
     void append(ByteBuffer buffer);
 
-    void appendLast(ByteBuffer buffer);
-
-    T build();
+    T appendLast(ByteBuffer buffer);
   }
 }

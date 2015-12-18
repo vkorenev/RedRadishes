@@ -21,12 +21,8 @@ public class BulkStringBuilders {
         }
 
         @Override
-        public void appendLast(ByteBuffer buffer) {
+        public byte[] appendLast(ByteBuffer buffer) {
           append(buffer);
-        }
-
-        @Override
-        public byte[] build() {
           return bytes;
         }
       };
@@ -41,14 +37,10 @@ public class BulkStringBuilders {
         }
 
         @Override
-        public void appendLast(ByteBuffer buffer) {
+        public CharSequence appendLast(ByteBuffer buffer) {
           checkResult(charsetDecoder.decode(buffer, charBuffer, true));
           checkResult(charsetDecoder.flush(charBuffer));
           charsetDecoder.reset();
-        }
-
-        @Override
-        public CharSequence build() {
           charBuffer.flip();
           return charBuffer;
         }
@@ -127,12 +119,8 @@ public class BulkStringBuilders {
         }
 
         @Override
-        public void appendLast(ByteBuffer buffer) {
+        public Long appendLast(ByteBuffer buffer) {
           append(buffer);
-        }
-
-        @Override
-        public Long build() {
           return negative ? -num : num;
         }
       };

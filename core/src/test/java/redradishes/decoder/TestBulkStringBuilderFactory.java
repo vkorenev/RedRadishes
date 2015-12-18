@@ -20,14 +20,9 @@ public class TestBulkStringBuilderFactory implements BulkStringBuilderFactory<by
       }
 
       @Override
-      public void appendLast(ByteBuffer buffer) {
+      public byte[] appendLast(ByteBuffer buffer) {
         append(buffer);
         finalized = true;
-      }
-
-      @Override
-      public byte[] build() {
-        if (!finalized) throw new IllegalStateException();
         return bytes;
       }
     };
