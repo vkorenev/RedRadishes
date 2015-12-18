@@ -5,17 +5,16 @@ import redradishes.decoder.parser.ArrayParser;
 import redradishes.decoder.parser.ArrayReplyParser;
 import redradishes.decoder.parser.BulkStringParser;
 import redradishes.decoder.parser.BulkStringReplyParser;
+import redradishes.decoder.parser.CombiningReplyParser;
 import redradishes.decoder.parser.IntegerReplyParser;
-import redradishes.decoder.parser.Parser;
+import redradishes.decoder.parser.ReplyParser;
 import redradishes.decoder.parser.ScanReplyParser;
-import redradishes.decoder.parser.SeqParser;
 import redradishes.decoder.parser.SimpleStringReplyParser;
 
 import static redradishes.decoder.parser.CharAppendingParser.CHAR_SEQUENCE_PARSER;
 import static redradishes.decoder.parser.LongParser.INTEGER_PARSER;
 import static redradishes.decoder.parser.LongParser.LONG_PARSER;
 import static redradishes.decoder.parser.RespParsers.bulkStringParser;
-import static redradishes.decoder.parser.SeqParser.seq;
 
 public class Replies {
 
@@ -42,20 +41,21 @@ public class Replies {
 
   public static <E, T> ArrayReplyParser<T> arrayReply(ArrayBuilderFactory<E, ? extends T> arrayBuilderFactory,
       BulkStringBuilderFactory<?, ? extends E> elementBuilderFactory) {
-    Parser<E> elementParser = bulkStringParser(elementBuilderFactory);
+    ReplyParser<E> elementParser = bulkStringParser(elementBuilderFactory);
     return new ArrayReplyParser<>(len -> new ArrayParser<>(len, arrayBuilderFactory, elementParser));
   }
 
   public static <K, V, T> ArrayReplyParser<T> mapReply(MapBuilderFactory<K, V, ? extends T> arrayBuilderFactory,
       BulkStringBuilderFactory<?, ? extends K> keyBuilderFactory,
       BulkStringBuilderFactory<?, ? extends V> valueBuilderFactory) {
-    SeqParser<K, V> kvParser = seq(bulkStringParser(keyBuilderFactory), bulkStringParser(valueBuilderFactory));
+    CombiningReplyParser<K, V> kvParser =
+        CombiningReplyParser.combine(bulkStringParser(keyBuilderFactory), bulkStringParser(valueBuilderFactory));
     return new ArrayReplyParser<>(len -> new ArrayAsMapParser<>(len / 2, arrayBuilderFactory, kvParser));
   }
 
   public static <E, T> ScanReplyParser<T> scanReply(ArrayBuilderFactory<E, ? extends T> arrayBuilderFactory,
       BulkStringBuilderFactory<?, ? extends E> elementBuilderFactory) {
-    Parser<E> elementParser = bulkStringParser(elementBuilderFactory);
+    ReplyParser<E> elementParser = bulkStringParser(elementBuilderFactory);
     return new ScanReplyParser<>(len -> new ArrayParser<>(len, arrayBuilderFactory, elementParser));
   }
 }

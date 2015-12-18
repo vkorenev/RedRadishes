@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-interface CombiningReplyParser<T1, T2> {
+public interface CombiningReplyParser<T1, T2> {
   static <T1, T2> CombiningReplyParser<T1, T2> combine(ReplyParser<? extends T1> parser1,
       ReplyParser<? extends T2> parser2) {
     return new CombiningReplyParser<T1, T2>() {

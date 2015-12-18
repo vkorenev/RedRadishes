@@ -20,7 +20,8 @@ import java.util.function.Function;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verifyZeroInteractions;
-import static redradishes.decoder.parser.TestUtil.parse;
+import static redradishes.decoder.parser.TestUtil.assertNoFailure;
+import static redradishes.decoder.parser.TestUtil.parseReply;
 import static redradishes.decoder.parser.TestUtil.split;
 
 @RunWith(Theories.class)
@@ -32,9 +33,9 @@ public class BulkStringParserTest {
 
   @Theory
   public void parses(@ForAll byte[] bytes, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
-    Parser<byte[]> parser = new BulkStringParser<>(bytes.length, new TestBulkStringBuilderFactory());
+    ReplyParser<byte[]> parser = new BulkStringParser<>(bytes.length, new TestBulkStringBuilderFactory());
     Iterator<ByteBuffer> chunks = split(appendCRLF(bytes), bufferSize);
-    assertThat(parse(chunks, parser, Function.identity(), charsetDecoder), equalTo(bytes));
+    assertThat(parseReply(chunks, parser, Function.identity(), assertNoFailure(), charsetDecoder), equalTo(bytes));
     verifyZeroInteractions(charsetDecoder);
   }
 
