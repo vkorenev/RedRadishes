@@ -1,5 +1,6 @@
 package redradishes.decoder.parser;
 
+import com.google.common.base.Throwables;
 import redradishes.decoder.ArrayBuilderFactory;
 
 import java.nio.ByteBuffer;
@@ -9,9 +10,9 @@ import java.util.function.Function;
 public class ArrayParser<T, E> implements Parser<T> {
   private final int len;
   private final ArrayBuilderFactory<E, ? extends T> builderFactory;
-  private final Parser<E> elementParser;
+  private final ReplyParser<E> elementParser;
 
-  public ArrayParser(int len, ArrayBuilderFactory<E, ? extends T> builderFactory, Parser<E> elementParser) {
+  public ArrayParser(int len, ArrayBuilderFactory<E, ? extends T> builderFactory, ReplyParser<E> elementParser) {
     this.len = len;
     this.builderFactory = builderFactory;
     this.elementParser = elementParser;
@@ -26,7 +27,7 @@ public class ArrayParser<T, E> implements Parser<T> {
 
   private <U> U doParse(ByteBuffer buffer, Function<? super T, U> resultHandler,
       PartialHandler<? super T, U> partialHandler, ArrayBuilderFactory.Builder<E, ? extends T> builder, int remaining,
-      Parser<? extends E> elemParser, CharsetDecoder charsetDecoder) {
+      ReplyParser<? extends E> elemParser, CharsetDecoder charsetDecoder) {
     while (remaining > 0) {
       Parser<T> partial = parsePartial(buffer, builder, remaining, elemParser, charsetDecoder);
       if (partial != null) {
@@ -40,8 +41,8 @@ public class ArrayParser<T, E> implements Parser<T> {
   }
 
   private Parser<T> parsePartial(ByteBuffer buffer, ArrayBuilderFactory.Builder<E, ? extends T> builder, int remaining,
-      Parser<? extends E> elemParser, CharsetDecoder charsetDecoder) {
-    return elemParser.parse(buffer, value -> {
+      ReplyParser<? extends E> elemParser, CharsetDecoder charsetDecoder) {
+    return elemParser.parseReply(buffer, value -> {
       builder.add(value);
       return null;
     }, partial -> new Parser<T>() {
@@ -50,6 +51,8 @@ public class ArrayParser<T, E> implements Parser<T> {
           PartialHandler<? super T, U1> partialHandler, CharsetDecoder charsetDecoder) {
         return doParse(buffer, resultHandler, partialHandler, builder, remaining, partial, charsetDecoder);
       }
+    }, e -> {
+      throw Throwables.propagate(e);
     }, charsetDecoder);
   }
 }

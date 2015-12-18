@@ -26,7 +26,7 @@ public interface ReplyParser<T> {
 
   static <T1, T2, R> ReplyParser<R> combine(ReplyParser<? extends T1> parser1, ReplyParser<? extends T2> parser2,
       BiFunction<? super T1, ? super T2, ? extends R> fn) {
-    return new CombiningReplyParser<>(parser1, parser2, fn);
+    return CombiningReplyParser.combine(parser1, parser2).mapToParser(fn);
   }
 
   interface PartialReplyHandler<T, U> extends Parser.PartialHandler<T, U> {
