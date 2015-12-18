@@ -23,12 +23,12 @@ public class BulkStringParser<T> implements Parser<T> {
   public <U> U parse(ByteBuffer buffer, Function<? super T, U> resultHandler,
       PartialHandler<? super T, U> partialHandler, CharsetDecoder charsetDecoder) {
     return doParse(buffer, resultHandler, partialHandler, builderFactory.create(len, charsetDecoder), len, READING,
-        null);
+        null, charsetDecoder);
   }
 
   private <U> U doParse(ByteBuffer buffer, Function<? super T, U> resultHandler,
       PartialHandler<? super T, U> partialHandler, BulkStringBuilderFactory.Builder<? extends T> builder, int len,
-      int state, @Nullable T result) {
+      int state, @Nullable T result, CharsetDecoder charsetDecoder) {
     readLoop:
     while (buffer.hasRemaining()) {
       switch (state) {
@@ -38,13 +38,13 @@ public class BulkStringParser<T> implements Parser<T> {
             ByteBuffer src = buffer.slice();
             src.limit(len);
             buffer.position(buffer.position() + len);
-            result = builder.appendLast(src);
+            result = builder.appendLast(src, charsetDecoder);
             if (src.hasRemaining()) {
               throw new IllegalStateException("Bulk string decoding error");
             }
             state = WAITING_FOR_CR;
           } else {
-            builder.append(buffer);
+            builder.append(buffer, charsetDecoder);
             int bytesRead = remaining - buffer.remaining();
             len -= bytesRead;
             break readLoop;
@@ -72,7 +72,7 @@ public class BulkStringParser<T> implements Parser<T> {
       @Override
       public <U1> U1 parse(ByteBuffer buffer, Function<? super T, U1> resultHandler,
           PartialHandler<? super T, U1> partialHandler, CharsetDecoder charsetDecoder) {
-        return doParse(buffer, resultHandler, partialHandler, builder, len1, state1, result1);
+        return doParse(buffer, resultHandler, partialHandler, builder, len1, state1, result1, charsetDecoder);
       }
     });
   }

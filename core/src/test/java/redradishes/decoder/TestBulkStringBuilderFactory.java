@@ -12,7 +12,7 @@ public class TestBulkStringBuilderFactory implements BulkStringBuilderFactory<by
       private boolean finalized = false;
 
       @Override
-      public void append(ByteBuffer buffer) {
+      public void append(ByteBuffer buffer, CharsetDecoder charsetDecoder) {
         if (finalized) throw new IllegalStateException();
         int len = buffer.remaining();
         buffer.get(bytes, offset, len);
@@ -20,8 +20,8 @@ public class TestBulkStringBuilderFactory implements BulkStringBuilderFactory<by
       }
 
       @Override
-      public byte[] appendLast(ByteBuffer buffer) {
-        append(buffer);
+      public byte[] appendLast(ByteBuffer buffer, CharsetDecoder charsetDecoder) {
+        append(buffer, charsetDecoder);
         finalized = true;
         return bytes;
       }

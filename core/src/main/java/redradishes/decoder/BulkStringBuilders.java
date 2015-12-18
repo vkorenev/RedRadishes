@@ -5,6 +5,7 @@ import redradishes.UncheckedCharacterCodingException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 
 public class BulkStringBuilders {
@@ -14,15 +15,15 @@ public class BulkStringBuilders {
         private int offset = 0;
 
         @Override
-        public void append(ByteBuffer buffer) {
+        public void append(ByteBuffer buffer, CharsetDecoder charsetDecoder) {
           int len = buffer.remaining();
           buffer.get(bytes, offset, len);
           offset += len;
         }
 
         @Override
-        public byte[] appendLast(ByteBuffer buffer) {
-          append(buffer);
+        public byte[] appendLast(ByteBuffer buffer, CharsetDecoder charsetDecoder) {
+          append(buffer, charsetDecoder);
           return bytes;
         }
       };
@@ -32,12 +33,12 @@ public class BulkStringBuilders {
         private final CharBuffer charBuffer = CharBuffer.allocate((int) (length * charsetDecoder.maxCharsPerByte()));
 
         @Override
-        public void append(ByteBuffer buffer) {
+        public void append(ByteBuffer buffer, CharsetDecoder charsetDecoder) {
           checkResult(charsetDecoder.decode(buffer, charBuffer, false));
         }
 
         @Override
-        public CharSequence appendLast(ByteBuffer buffer) {
+        public CharSequence appendLast(ByteBuffer buffer, CharsetDecoder charsetDecoder) {
           checkResult(charsetDecoder.decode(buffer, charBuffer, true));
           checkResult(charsetDecoder.flush(charBuffer));
           charsetDecoder.reset();
@@ -68,7 +69,7 @@ public class BulkStringBuilders {
         long num = 0;
 
         @Override
-        public void append(ByteBuffer buffer) {
+        public void append(ByteBuffer buffer, CharsetDecoder charsetDecoder) {
           while (buffer.hasRemaining()) {
             byte b = buffer.get();
             switch (state) {
@@ -119,8 +120,8 @@ public class BulkStringBuilders {
         }
 
         @Override
-        public Long appendLast(ByteBuffer buffer) {
-          append(buffer);
+        public Long appendLast(ByteBuffer buffer, CharsetDecoder charsetDecoder) {
+          append(buffer, charsetDecoder);
           return negative ? -num : num;
         }
       };

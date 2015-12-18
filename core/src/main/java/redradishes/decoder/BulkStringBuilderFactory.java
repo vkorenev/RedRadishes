@@ -14,21 +14,21 @@ public interface BulkStringBuilderFactory<T> {
       Builder<T> builder = create(length, charsetDecoder);
       return new Builder<R>() {
         @Override
-        public void append(ByteBuffer buffer) {
-          builder.append(buffer);
+        public void append(ByteBuffer buffer, CharsetDecoder charsetDecoder) {
+          builder.append(buffer, charsetDecoder);
         }
 
         @Override
-        public R appendLast(ByteBuffer buffer) {
-          return mapper.apply(builder.appendLast(buffer));
+        public R appendLast(ByteBuffer buffer, CharsetDecoder charsetDecoder) {
+          return mapper.apply(builder.appendLast(buffer, charsetDecoder));
         }
       };
     };
   }
 
   interface Builder<T> {
-    void append(ByteBuffer buffer);
+    void append(ByteBuffer buffer, CharsetDecoder charsetDecoder);
 
-    T appendLast(ByteBuffer buffer);
+    T appendLast(ByteBuffer buffer, CharsetDecoder charsetDecoder);
   }
 }
