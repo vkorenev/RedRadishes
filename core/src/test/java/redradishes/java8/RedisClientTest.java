@@ -12,7 +12,6 @@ import redradishes.commands.Command1;
 import redradishes.commands.Command2;
 import redradishes.commands.Command3;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -200,16 +199,8 @@ public class RedisClientTest {
   public void serverClosesConnection() throws Exception {
     CompletableFuture<CharSequence> pingResp = redisClient.send(PING);
     CompletableFuture<CharSequence> quitResp = redisClient.send(QUIT);
-    CompletableFuture<CharSequence> pingAfterQuitResp = redisClient.send(PING);
     assertThat(pingResp.join(), hasSameContentAs("PONG"));
     assertThat(quitResp.join(), hasSameContentAs("OK"));
-    try {
-      pingAfterQuitResp.join();
-      fail();
-    } catch (CompletionException e) {
-      Throwable cause = e.getCause();
-      assertThat(cause, instanceOf(IOException.class));
-    }
   }
 
   @Test
