@@ -24,6 +24,18 @@ public interface ReplyParser<T> {
     };
   }
 
+  default <R> ReplyParser<R> fail(Function<? super T, ? extends Throwable> mapper) {
+    return new ReplyParser<R>() {
+      @Override
+      public <U> U parseReply(ByteBuffer buffer, Function<? super R, U> resultHandler,
+          PartialReplyHandler<? super R, U> partialReplyHandler, FailureHandler<U> failureHandler,
+          CharsetDecoder charsetDecoder) {
+        return ReplyParser.this.parseReply(buffer, value -> failureHandler.failure(mapper.apply(value)),
+            partial -> partialReplyHandler.partialReply(partial.<R>fail(mapper)), failureHandler, charsetDecoder);
+      }
+    };
+  }
+
   static <T1, T2, R> ReplyParser<R> combine(ReplyParser<? extends T1> parser1, ReplyParser<? extends T2> parser2,
       BiFunction<? super T1, ? super T2, ? extends R> fn) {
     return CombiningReplyParser.combine(parser1, parser2).mapToParser(fn);
