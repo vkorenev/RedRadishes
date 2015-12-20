@@ -1,7 +1,5 @@
 package redradishes.decoder;
 
-import redradishes.UncheckedCharacterCodingException;
-
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -37,13 +35,15 @@ public class BulkStringBuilders {
         }
 
         @Override
-        public CharBuffer append(CharBuffer charBuffer, ByteBuffer buffer, CharsetDecoder charsetDecoder) {
+        public CharBuffer append(CharBuffer charBuffer, ByteBuffer buffer, CharsetDecoder charsetDecoder)
+            throws CharacterCodingException {
           checkResult(charsetDecoder.decode(buffer, charBuffer, false));
           return charBuffer;
         }
 
         @Override
-        public CharSequence appendLast(CharBuffer charBuffer, ByteBuffer buffer, CharsetDecoder charsetDecoder) {
+        public CharSequence appendLast(CharBuffer charBuffer, ByteBuffer buffer, CharsetDecoder charsetDecoder)
+            throws CharacterCodingException {
           checkResult(charsetDecoder.decode(buffer, charBuffer, true));
           checkResult(charsetDecoder.flush(charBuffer));
           charsetDecoder.reset();
@@ -51,13 +51,9 @@ public class BulkStringBuilders {
           return charBuffer;
         }
 
-        private void checkResult(CoderResult coderResult) {
+        private void checkResult(CoderResult coderResult) throws CharacterCodingException {
           if (!coderResult.isUnderflow()) {
-            try {
-              coderResult.throwException();
-            } catch (CharacterCodingException e) {
-              throw new UncheckedCharacterCodingException(e);
-            }
+            coderResult.throwException();
           }
         }
       };

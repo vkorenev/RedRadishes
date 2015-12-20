@@ -1,6 +1,7 @@
 package redradishes.decoder.parser;
 
 import redradishes.decoder.BulkStringBuilderFactory;
+import redradishes.decoder.ReplyParseException;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
@@ -24,31 +25,46 @@ public class BulkStringParser<T, B> implements ReplyParser<T> {
   public <U> U parseReply(ByteBuffer buffer, Function<? super T, U> resultHandler,
       PartialReplyHandler<? super T, U> partialReplyHandler, FailureHandler<U> failureHandler,
       CharsetDecoder charsetDecoder) {
-    return doParse(buffer, resultHandler, partialReplyHandler, builderFactory.create(len, charsetDecoder), len, READING,
-        null, charsetDecoder);
+    return doParse(buffer, resultHandler, partialReplyHandler, failureHandler, charsetDecoder,
+        builderFactory.create(len, charsetDecoder), len, READING, null, null);
   }
 
   private <U> U doParse(ByteBuffer buffer, Function<? super T, U> resultHandler,
-      PartialReplyHandler<? super T, U> partialReplyHandler, B builder, int len, int state, @Nullable T result,
-      CharsetDecoder charsetDecoder) {
+      PartialReplyHandler<? super T, U> partialReplyHandler, FailureHandler<U> failureHandler,
+      CharsetDecoder charsetDecoder, B builder, int len, int state, @Nullable T result, @Nullable Exception exception) {
     readLoop:
     while (buffer.hasRemaining()) {
       switch (state) {
         case READING:
           int remaining = buffer.remaining();
           if (remaining >= len) {
-            ByteBuffer src = buffer.slice();
-            src.limit(len);
-            buffer.position(buffer.position() + len);
-            result = builderFactory.appendLast(builder, src, charsetDecoder);
-            if (src.hasRemaining()) {
-              throw new IllegalStateException("Bulk string decoding error");
+            if (exception == null) {
+              ByteBuffer src = buffer.slice();
+              src.limit(len);
+              try {
+                result = builderFactory.appendLast(builder, src, charsetDecoder);
+                if (src.hasRemaining()) {
+                  exception = new ReplyParseException("Bulk string decoder has not consumed all input");
+                }
+              } catch (Exception e) {
+                exception = e;
+              }
             }
+            buffer.position(buffer.position() + len);
             state = WAITING_FOR_CR;
           } else {
-            builder = builderFactory.append(builder, buffer, charsetDecoder);
-            int bytesRead = remaining - buffer.remaining();
-            len -= bytesRead;
+            if (exception == null) {
+              try {
+                builder = builderFactory.append(builder, buffer, charsetDecoder);
+              } catch (Exception e) {
+                exception = e;
+              }
+              int bytesRead = remaining - buffer.remaining();
+              len -= bytesRead;
+            } else {
+              buffer.position(buffer.limit());
+              len -= remaining;
+            }
             break readLoop;
           }
           break;
@@ -61,7 +77,7 @@ public class BulkStringParser<T, B> implements ReplyParser<T> {
           break;
         case WAITING_FOR_LF:
           if (buffer.get() == '\n') {
-            return resultHandler.apply(result);
+            return exception == null ? resultHandler.apply(result) : failureHandler.failure(exception);
           } else {
             throw new IllegalStateException("LF is expected");
           }
@@ -71,12 +87,14 @@ public class BulkStringParser<T, B> implements ReplyParser<T> {
     int len1 = len;
     int state1 = state;
     T result1 = result;
+    Exception exception1 = exception;
     return partialReplyHandler.partialReply(new ReplyParser<T>() {
       @Override
-      public <U1> U1 parseReply(ByteBuffer buffer1, Function<? super T, U1> resultHandler1,
-          PartialReplyHandler<? super T, U1> partialReplyHandler1, FailureHandler<U1> failureHandler,
-          CharsetDecoder charsetDecoder1) {
-        return doParse(buffer1, resultHandler1, partialReplyHandler1, builder1, len1, state1, result1, charsetDecoder1);
+      public <U1> U1 parseReply(ByteBuffer buffer, Function<? super T, U1> resultHandler,
+          PartialReplyHandler<? super T, U1> partialReplyHandler, FailureHandler<U1> failureHandler,
+          CharsetDecoder charsetDecoder) {
+        return doParse(buffer, resultHandler, partialReplyHandler, failureHandler, charsetDecoder, builder1, len1,
+            state1, result1, exception1);
       }
     });
   }
