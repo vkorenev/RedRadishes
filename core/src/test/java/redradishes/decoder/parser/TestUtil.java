@@ -27,7 +27,7 @@ public class TestUtil {
       protected ByteBuffer computeNext() {
         if (offset < bytes.length) {
           byteBuffer.compact();
-          int size = min(chunkSize, bytes.length - offset);
+          int size = min(byteBuffer.remaining(), min(chunkSize, bytes.length - offset));
           byteBuffer.put(bytes, offset, size);
           offset += size;
           byteBuffer.flip();

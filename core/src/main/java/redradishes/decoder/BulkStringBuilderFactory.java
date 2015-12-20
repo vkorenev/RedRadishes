@@ -8,9 +8,9 @@ import java.util.function.Function;
 public interface BulkStringBuilderFactory<B, R> {
   B create(int length, CharsetDecoder charsetDecoder);
 
-  B append(B builder, ByteBuffer buffer, CharsetDecoder charsetDecoder);
+  B append(B builder, ByteBuffer buffer, CharsetDecoder charsetDecoder) throws Exception;
 
-  R appendLast(B builder, ByteBuffer buffer, CharsetDecoder charsetDecoder);
+  R appendLast(B builder, ByteBuffer buffer, CharsetDecoder charsetDecoder) throws Exception;
 
   default <U> BulkStringBuilderFactory<B, U> map(Function<? super R, ? extends U> mapper) {
     Objects.requireNonNull(mapper);
@@ -21,12 +21,12 @@ public interface BulkStringBuilderFactory<B, R> {
       }
 
       @Override
-      public B append(B builder, ByteBuffer buffer, CharsetDecoder charsetDecoder) {
+      public B append(B builder, ByteBuffer buffer, CharsetDecoder charsetDecoder) throws Exception {
         return BulkStringBuilderFactory.this.append(builder, buffer, charsetDecoder);
       }
 
       @Override
-      public U appendLast(B builder, ByteBuffer buffer, CharsetDecoder charsetDecoder) {
+      public U appendLast(B builder, ByteBuffer buffer, CharsetDecoder charsetDecoder) throws Exception {
         return mapper.apply(BulkStringBuilderFactory.this.appendLast(builder, buffer, charsetDecoder));
       }
     };
