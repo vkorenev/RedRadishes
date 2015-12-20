@@ -20,7 +20,7 @@ public class ScanReplyParser<T> extends AnyReplyParser<ScanResult<T>> {
   }
 
   private static <T> ReplyParser<ScanResult<T>> scanResultParser(IntFunction<Parser<T>> elementsParserFactory) {
-    ReplyParser<T> elementsParser = RespParsers.arrayReplyParser(elementsParserFactory);
+    ReplyParser<T> elementsParser = new ArrayReplyParser<>(elementsParserFactory);
     return combine(L_2_PARSER, combine(CURSOR_PARSER, elementsParser, ScanResult::new), (a, b) -> b);
   }
 }
