@@ -16,7 +16,6 @@ import redradishes.decoder.TestBulkStringBuilderFactory;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.function.Function;
 
 import static org.hamcrest.Matchers.allOf;
@@ -35,7 +34,6 @@ import static org.mockito.Mockito.when;
 import static redradishes.decoder.parser.TestUtil.assertNoFailure;
 import static redradishes.decoder.parser.TestUtil.assertNoResult;
 import static redradishes.decoder.parser.TestUtil.parseReply;
-import static redradishes.decoder.parser.TestUtil.split;
 import static redradishes.hamcrest.ThrowableMessageMatcher.hasMessage;
 
 @RunWith(Theories.class)
@@ -47,9 +45,9 @@ public class BulkStringParserTest {
 
   @Theory
   public void parses(@ForAll byte[] bytes, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
-    ReplyParser<byte[]> parser = new BulkStringParser<>(bytes.length, new TestBulkStringBuilderFactory());
-    Iterator<ByteBuffer> chunks = split(appendCRLF(bytes), bufferSize);
-    assertThat(parseReply(chunks, parser, Function.identity(), assertNoFailure(), charsetDecoder), equalTo(bytes));
+    ByteBuffer src = ByteBuffer.wrap(appendCRLF(bytes));
+    assertThat(parseReply(src, bufferSize, new BulkStringParser<>(bytes.length, new TestBulkStringBuilderFactory()),
+        Function.identity(), assertNoFailure(), charsetDecoder), equalTo(bytes));
     verifyZeroInteractions(charsetDecoder);
   }
 
@@ -64,10 +62,10 @@ public class BulkStringParserTest {
     boolean oneChunk = bytes.length <= bufferSize;
     when(bulkStringBuilderFactory.appendLast(any(), any(), any())).thenThrow(oneChunk ? e1 : e2);
 
-    Iterator<ByteBuffer> chunks = split(appendCRLF(bytes), bufferSize);
+    ByteBuffer src = ByteBuffer.wrap(appendCRLF(bytes));
     assertThat(
-        parseReply(chunks, new BulkStringParser<>(bytes.length, bulkStringBuilderFactory), assertNoResult(), e -> e,
-            charsetDecoder), equalTo(e1));
+        parseReply(src, bufferSize, new BulkStringParser<>(bytes.length, bulkStringBuilderFactory), assertNoResult(),
+            e -> e, charsetDecoder), equalTo(e1));
     verifyZeroInteractions(charsetDecoder);
     verify(bulkStringBuilderFactory).create(bytes.length, charsetDecoder);
     if (oneChunk) {
@@ -102,10 +100,10 @@ public class BulkStringParserTest {
       }
     };
 
-    Iterator<ByteBuffer> chunks = split(appendCRLF(bytes), bufferSize);
+    ByteBuffer src = ByteBuffer.wrap(appendCRLF(bytes));
     assertThat(
-        parseReply(chunks, new BulkStringParser<>(bytes.length, bulkStringBuilderFactory), assertNoResult(), e -> e,
-            charsetDecoder), allOf(instanceOf(ReplyParseException.class),
+        parseReply(src, bufferSize, new BulkStringParser<>(bytes.length, bulkStringBuilderFactory), assertNoResult(),
+            e -> e, charsetDecoder), allOf(instanceOf(ReplyParseException.class),
             hasMessage(equalTo("Bulk string decoder has not consumed all input"))));
   }
 

@@ -16,7 +16,6 @@ import org.mockito.junit.MockitoRule;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.util.Iterator;
 import java.util.function.Function;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
@@ -36,7 +35,6 @@ import static redradishes.decoder.Replies.bulkStringReply;
 import static redradishes.decoder.parser.TestUtil.assertNoFailure;
 import static redradishes.decoder.parser.TestUtil.getByteString;
 import static redradishes.decoder.parser.TestUtil.parseReply;
-import static redradishes.decoder.parser.TestUtil.split;
 import static redradishes.hamcrest.HasSameContentAs.hasSameContentAs;
 
 @RunWith(Theories.class)
@@ -56,11 +54,12 @@ public class BulkStringBuildersTest {
   }
 
   @Theory
-  public void parsesCharSequences(@ForAll String value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize,
+  public void parsesCharSequences(@ForAll String value, @TestedOn(ints = {4, 5, 6, 7, 10, 100, 1000}) int bufferSize,
       Charset charset) {
-    Iterator<ByteBuffer> chunks = split(getByteString(value.getBytes(charset)), bufferSize);
-    CharSequence actual = parseReply(chunks, bulkStringReply(charSequence()), Function.identity(), assertNoFailure(),
-        charset.newDecoder());
+    ByteBuffer src = ByteBuffer.wrap(getByteString(value.getBytes(charset)));
+    CharSequence actual =
+        parseReply(src, bufferSize, bulkStringReply(charSequence()), Function.identity(), assertNoFailure(),
+            charset.newDecoder());
     assertThat(actual, hasSameContentAs(value));
   }
 
@@ -71,35 +70,37 @@ public class BulkStringBuildersTest {
   }
 
   @Theory
-  public void parsesStrings(@ForAll String value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize,
+  public void parsesStrings(@ForAll String value, @TestedOn(ints = {4, 5, 6, 7, 10, 100, 1000}) int bufferSize,
       Charset charset) {
-    Iterator<ByteBuffer> chunks = split(getByteString(value.getBytes(charset)), bufferSize);
-    CharSequence actual =
-        parseReply(chunks, bulkStringReply(string()), Function.identity(), assertNoFailure(), charset.newDecoder());
+    ByteBuffer src = ByteBuffer.wrap(getByteString(value.getBytes(charset)));
+    CharSequence actual = parseReply(src, bufferSize, bulkStringReply(string()), Function.identity(), assertNoFailure(),
+        charset.newDecoder());
     assertThat(actual, equalTo(value));
   }
 
   @Theory
   public void parsesIntegers(@ForAll int value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
-    Iterator<ByteBuffer> chunks = split(getByteString(Integer.toString(value).getBytes(US_ASCII)), bufferSize);
-    assertThat(parseReply(chunks, bulkStringReply(integer()), Function.identity(), assertNoFailure(), charsetDecoder),
+    ByteBuffer src = ByteBuffer.wrap(getByteString(Integer.toString(value).getBytes(US_ASCII)));
+    assertThat(
+        parseReply(src, bufferSize, bulkStringReply(integer()), Function.identity(), assertNoFailure(), charsetDecoder),
         equalTo(value));
     verifyZeroInteractions(charsetDecoder);
   }
 
   @Theory
   public void parsesLongs(@ForAll long value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
-    Iterator<ByteBuffer> chunks = split(getByteString(Long.toString(value).getBytes(US_ASCII)), bufferSize);
-    assertThat(parseReply(chunks, bulkStringReply(_long()), Function.identity(), assertNoFailure(), charsetDecoder),
+    ByteBuffer src = ByteBuffer.wrap(getByteString(Long.toString(value).getBytes(US_ASCII)));
+    assertThat(
+        parseReply(src, bufferSize, bulkStringReply(_long()), Function.identity(), assertNoFailure(), charsetDecoder),
         equalTo(value));
     verifyZeroInteractions(charsetDecoder);
   }
 
   @Theory
   public void parsesByteArrays(@ForAll byte[] value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
-    Iterator<ByteBuffer> chunks = split(getByteString(value), bufferSize);
-    assertThat(parseReply(chunks, bulkStringReply(byteArray()), Function.identity(), assertNoFailure(), charsetDecoder),
-        equalTo(value));
+    ByteBuffer src = ByteBuffer.wrap(getByteString(value));
+    assertThat(parseReply(src, bufferSize, bulkStringReply(byteArray()), Function.identity(), assertNoFailure(),
+        charsetDecoder), equalTo(value));
     verifyZeroInteractions(charsetDecoder);
   }
 }

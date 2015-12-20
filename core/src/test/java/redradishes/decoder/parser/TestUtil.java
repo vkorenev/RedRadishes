@@ -1,55 +1,36 @@
 package redradishes.decoder.parser;
 
-import com.google.common.collect.AbstractIterator;
 import com.google.common.io.ByteArrayDataOutput;
 import redradishes.decoder.parser.ReplyParser.FailureHandler;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.function.Function;
 
-import static java.lang.Math.min;
 import static java.nio.charset.StandardCharsets.US_ASCII;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 
 public class TestUtil {
-  public static Iterator<ByteBuffer> split(byte[] bytes, int chunkSize) {
-    return new AbstractIterator<ByteBuffer>() {
-      private final ByteBuffer byteBuffer = ByteBuffer.allocate(chunkSize + 10);
-      private int offset = 0;
-
-      {
-        byteBuffer.flip();
-      }
-
-      @Override
-      protected ByteBuffer computeNext() {
-        if (offset < bytes.length) {
-          byteBuffer.compact();
-          int size = min(byteBuffer.remaining(), min(chunkSize, bytes.length - offset));
-          byteBuffer.put(bytes, offset, size);
-          offset += size;
-          byteBuffer.flip();
-          return byteBuffer;
-        } else {
-          return endOfData();
-        }
-      }
-    };
-  }
-
-  static <T, U> U parse(Iterator<ByteBuffer> chunks, Parser<T> parser, Function<? super T, U> resultHandler,
-      CharsetDecoder charsetDecoder) {
-    return parser.parse(chunks.next(), resultHandler, partial -> parse(chunks, partial, resultHandler, charsetDecoder),
-        charsetDecoder);
-  }
-
-  public static <T, U> U parseReply(Iterator<ByteBuffer> chunks, ReplyParser<T> parser,
+  public static <T, U> U parseReply(ByteBuffer byteBuffer, int chunkSize, ReplyParser<T> parser,
       Function<? super T, U> resultHandler, FailureHandler<U> failureHandler, CharsetDecoder charsetDecoder) {
-    return parser.parseReply(chunks.next(), resultHandler,
-        partial -> parseReply(chunks, partial, resultHandler, failureHandler, charsetDecoder), failureHandler,
-        charsetDecoder);
+    ByteBuffer src;
+    if (byteBuffer.remaining() > chunkSize) {
+      src = byteBuffer.slice();
+      src.limit(src.position() + chunkSize);
+    } else {
+      src = byteBuffer;
+    }
+    U result = parser.parseReply(src, resultHandler, partial -> {
+      assertThat(src, not(sameInstance(byteBuffer)));
+      byteBuffer.position(byteBuffer.position() + chunkSize - src.remaining());
+      return parseReply(byteBuffer, chunkSize, partial, resultHandler, failureHandler, charsetDecoder);
+    }, failureHandler, charsetDecoder);
+    assertFalse("Remaining bytes: " + byteBuffer.remaining(), byteBuffer.hasRemaining());
+    return result;
   }
 
   public static <T, R> Function<T, R> assertNoResult() {
