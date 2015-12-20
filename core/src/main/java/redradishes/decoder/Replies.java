@@ -14,7 +14,6 @@ import redradishes.decoder.parser.SimpleStringReplyParser;
 import static redradishes.decoder.parser.CharAppendingParser.CHAR_SEQUENCE_PARSER;
 import static redradishes.decoder.parser.LongParser.INTEGER_PARSER;
 import static redradishes.decoder.parser.LongParser.LONG_PARSER;
-import static redradishes.decoder.parser.RespParsers.bulkStringParser;
 
 public class Replies {
 
@@ -41,7 +40,7 @@ public class Replies {
 
   public static <E, T> ArrayReplyParser<T> arrayReply(ArrayBuilderFactory<E, ? extends T> arrayBuilderFactory,
       BulkStringBuilderFactory<?, ? extends E> elementBuilderFactory) {
-    ReplyParser<E> elementParser = bulkStringParser(elementBuilderFactory);
+    ReplyParser<E> elementParser = bulkStringReply(elementBuilderFactory);
     return new ArrayReplyParser<>(len -> new ArrayParser<>(len, arrayBuilderFactory, elementParser));
   }
 
@@ -49,13 +48,13 @@ public class Replies {
       BulkStringBuilderFactory<?, ? extends K> keyBuilderFactory,
       BulkStringBuilderFactory<?, ? extends V> valueBuilderFactory) {
     CombiningReplyParser<K, V> kvParser =
-        CombiningReplyParser.combine(bulkStringParser(keyBuilderFactory), bulkStringParser(valueBuilderFactory));
+        CombiningReplyParser.combine(bulkStringReply(keyBuilderFactory), bulkStringReply(valueBuilderFactory));
     return new ArrayReplyParser<>(len -> new ArrayAsMapParser<>(len / 2, arrayBuilderFactory, kvParser));
   }
 
   public static <E, T> ScanReplyParser<T> scanReply(ArrayBuilderFactory<E, ? extends T> arrayBuilderFactory,
       BulkStringBuilderFactory<?, ? extends E> elementBuilderFactory) {
-    ReplyParser<E> elementParser = bulkStringParser(elementBuilderFactory);
+    ReplyParser<E> elementParser = bulkStringReply(elementBuilderFactory);
     return new ScanReplyParser<>(len -> new ArrayParser<>(len, arrayBuilderFactory, elementParser));
   }
 }
