@@ -81,7 +81,8 @@ public class RepliesTest {
       @ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeAsSimpleString(s));
-    failsToParseReply(src, bufferSize, integerReply(), "Unexpected simple string reply");
+    failsToParseReply(src, bufferSize, integerReply(),
+        "Command returned simple string reply while integer reply reply was expected");
   }
 
   @Theory
@@ -111,7 +112,8 @@ public class RepliesTest {
       @ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeAsSimpleString(s));
-    failsToParseReply(src, bufferSize, longReply(), "Unexpected simple string reply");
+    failsToParseReply(src, bufferSize, longReply(),
+        "Command returned simple string reply while integer reply reply was expected");
   }
 
   @Theory
@@ -169,7 +171,8 @@ public class RepliesTest {
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeIntegerReply(num));
     BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
-    failsToParseReply(src, bufferSize, bulkStringReply(bulkStringBuilderFactory), "Unexpected integer reply");
+    failsToParseReply(src, bufferSize, bulkStringReply(bulkStringBuilderFactory),
+        "Command returned integer reply while bulk string reply reply was expected");
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
@@ -179,7 +182,8 @@ public class RepliesTest {
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeAsSimpleString(s));
     BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
-    failsToParseReply(src, bufferSize, bulkStringReply(bulkStringBuilderFactory), "Unexpected simple string reply");
+    failsToParseReply(src, bufferSize, bulkStringReply(bulkStringBuilderFactory),
+        "Command returned simple string reply while bulk string reply reply was expected");
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
@@ -230,7 +234,7 @@ public class RepliesTest {
     @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);
     failsToParseReply(src, bufferSize, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory),
-        "Unexpected integer reply");
+        "Command returned integer reply while array reply reply was expected");
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
@@ -243,7 +247,7 @@ public class RepliesTest {
     @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);
     failsToParseReply(src, bufferSize, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory),
-        "Unexpected simple string reply");
+        "Command returned simple string reply while array reply reply was expected");
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 

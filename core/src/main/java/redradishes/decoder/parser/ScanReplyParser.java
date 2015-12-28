@@ -11,12 +11,13 @@ import static redradishes.decoder.parser.ExpectedResultParser.nilParser;
 import static redradishes.decoder.parser.ReplyParser.combine;
 
 public class ScanReplyParser<T> extends AnyReplyParser<ScanResult<T>> {
+  private static final UnexpectedReplyTypeParsers UNEXPECTED = new UnexpectedReplyTypeParsers("array reply");
   private static final Parser<Void> L_2_PARSER = new ExpectedResultParser<>(new byte[]{'2', '\r', '\n'}, null);
   private static final ReplyParser<Long> CURSOR_PARSER = bulkStringReply(BulkStringBuilders._long());
 
   public ScanReplyParser(IntFunction<Parser<T>> elementsParserFactory) {
-    super(new UnexpectedSimpleReplyParser<>("simple string"), errorParser(),
-        new UnexpectedSimpleReplyParser<>("integer"), nilParser(), scanResultParser(elementsParserFactory));
+    super(UNEXPECTED.simpleStringParser(), errorParser(), UNEXPECTED.integerParser(), nilParser(),
+        scanResultParser(elementsParserFactory));
   }
 
   private static <T> ReplyParser<ScanResult<T>> scanResultParser(IntFunction<Parser<T>> elementsParserFactory) {
