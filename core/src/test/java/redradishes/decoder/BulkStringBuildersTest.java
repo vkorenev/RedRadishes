@@ -33,7 +33,7 @@ import static redradishes.decoder.BulkStringBuilders.integer;
 import static redradishes.decoder.BulkStringBuilders.string;
 import static redradishes.decoder.Replies.bulkStringReply;
 import static redradishes.decoder.parser.TestUtil.assertNoFailure;
-import static redradishes.decoder.parser.TestUtil.getByteString;
+import static redradishes.decoder.parser.TestUtil.encodeByteString;
 import static redradishes.decoder.parser.TestUtil.parseReply;
 import static redradishes.hamcrest.HasSameContentAs.hasSameContentAs;
 
@@ -56,7 +56,7 @@ public class BulkStringBuildersTest {
   @Theory
   public void parsesCharSequences(@ForAll String value, @TestedOn(ints = {4, 5, 6, 7, 10, 100, 1000}) int bufferSize,
       Charset charset) {
-    ByteBuffer src = ByteBuffer.wrap(getByteString(value.getBytes(charset)));
+    ByteBuffer src = ByteBuffer.wrap(encodeByteString(value.getBytes(charset)));
     CharSequence actual =
         parseReply(src, bufferSize, bulkStringReply(charSequence()), Function.identity(), assertNoFailure(),
             charset.newDecoder());
@@ -72,7 +72,7 @@ public class BulkStringBuildersTest {
   @Theory
   public void parsesStrings(@ForAll String value, @TestedOn(ints = {4, 5, 6, 7, 10, 100, 1000}) int bufferSize,
       Charset charset) {
-    ByteBuffer src = ByteBuffer.wrap(getByteString(value.getBytes(charset)));
+    ByteBuffer src = ByteBuffer.wrap(encodeByteString(value.getBytes(charset)));
     CharSequence actual = parseReply(src, bufferSize, bulkStringReply(string()), Function.identity(), assertNoFailure(),
         charset.newDecoder());
     assertThat(actual, equalTo(value));
@@ -80,7 +80,7 @@ public class BulkStringBuildersTest {
 
   @Theory
   public void parsesIntegers(@ForAll int value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
-    ByteBuffer src = ByteBuffer.wrap(getByteString(Integer.toString(value).getBytes(US_ASCII)));
+    ByteBuffer src = ByteBuffer.wrap(encodeByteString(Integer.toString(value).getBytes(US_ASCII)));
     assertThat(
         parseReply(src, bufferSize, bulkStringReply(integer()), Function.identity(), assertNoFailure(), charsetDecoder),
         equalTo(value));
@@ -89,7 +89,7 @@ public class BulkStringBuildersTest {
 
   @Theory
   public void parsesLongs(@ForAll long value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
-    ByteBuffer src = ByteBuffer.wrap(getByteString(Long.toString(value).getBytes(US_ASCII)));
+    ByteBuffer src = ByteBuffer.wrap(encodeByteString(Long.toString(value).getBytes(US_ASCII)));
     assertThat(
         parseReply(src, bufferSize, bulkStringReply(_long()), Function.identity(), assertNoFailure(), charsetDecoder),
         equalTo(value));
@@ -98,7 +98,7 @@ public class BulkStringBuildersTest {
 
   @Theory
   public void parsesByteArrays(@ForAll byte[] value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
-    ByteBuffer src = ByteBuffer.wrap(getByteString(value));
+    ByteBuffer src = ByteBuffer.wrap(encodeByteString(value));
     assertThat(parseReply(src, bufferSize, bulkStringReply(byteArray()), Function.identity(), assertNoFailure(),
         charsetDecoder), equalTo(value));
     verifyZeroInteractions(charsetDecoder);
