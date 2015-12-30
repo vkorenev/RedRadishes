@@ -189,7 +189,7 @@ public class RepliesTest {
   }
 
   @Theory
-  public void parsesArrayReply(@ForAll byte[][] arrays, @TestedOn(ints = {10, 100, 1000}) int bufferSize) {
+  public void parsesArrayReply(@ForAll byte[][] arrays, @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArray(arrays));
     assertThat(parseReply(src, bufferSize, arrayReply(array(byte[][]::new), new TestBulkStringBuilderFactory()),
         Function.identity(), assertNoFailure(), charsetDecoder), equalTo(arrays));
@@ -248,7 +248,7 @@ public class RepliesTest {
 
   @Theory
   public void parsesScanReply(@ForAll(sampleSize = 10) @InRange(minLong = 0) long cursor, @ForAll byte[][] elements,
-      @TestedOn(ints = {100, 1000}) int bufferSize) {
+      @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeScanReply(cursor, elements));
     ScanResult<byte[][]> scanResult =
         parseReply(src, bufferSize, scanReply(array(byte[][]::new), new TestBulkStringBuilderFactory()),

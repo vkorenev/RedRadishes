@@ -26,11 +26,19 @@ public class TestUtil {
     } else {
       src = byteBuffer;
     }
+    class Ref {
+      ReplyParser<? extends T> partial;
+    }
+    Ref ref = new Ref();
     U result = parser.parseReply(src, resultHandler, partial -> {
+      ref.partial = partial;
+      return null;
+    }, failureHandler, charsetDecoder);
+    if (ref.partial != null) {
       assertThat(src, not(sameInstance(byteBuffer)));
       byteBuffer.position(byteBuffer.position() + chunkSize - src.remaining());
-      return parseReply(byteBuffer, chunkSize, partial, resultHandler, failureHandler, charsetDecoder);
-    }, failureHandler, charsetDecoder);
+      return parseReply(byteBuffer, chunkSize, ref.partial, resultHandler, failureHandler, charsetDecoder);
+    }
     assertFalse("Remaining bytes: " + byteBuffer.remaining(), byteBuffer.hasRemaining());
     return result;
   }
