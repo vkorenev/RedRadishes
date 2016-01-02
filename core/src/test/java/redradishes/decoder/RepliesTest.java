@@ -84,7 +84,7 @@ public class RepliesTest {
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeSimpleString(s));
     failsToParseReply(src, bufferSize, integerReply(),
-        "Command returned simple string reply while integer reply reply was expected");
+        "Command returned simple string reply while integer reply was expected");
   }
 
   @Theory
@@ -92,15 +92,14 @@ public class RepliesTest {
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeBulkString(bytes));
     failsToParseReply(src, bufferSize, integerReply(),
-        "Command returned bulk string reply while integer reply reply was expected");
+        "Command returned bulk string reply while integer reply was expected");
   }
 
   @Theory
   public void failsToParseIntegerReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
       @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
-    failsToParseReply(src, bufferSize, integerReply(),
-        "Command returned array reply while integer reply reply was expected");
+    failsToParseReply(src, bufferSize, integerReply(), "Command returned array reply while integer reply was expected");
   }
 
   @Theory
@@ -131,7 +130,7 @@ public class RepliesTest {
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeSimpleString(s));
     failsToParseReply(src, bufferSize, longReply(),
-        "Command returned simple string reply while integer reply reply was expected");
+        "Command returned simple string reply while integer reply was expected");
   }
 
   @Theory
@@ -139,15 +138,14 @@ public class RepliesTest {
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeBulkString(bytes));
     failsToParseReply(src, bufferSize, longReply(),
-        "Command returned bulk string reply while integer reply reply was expected");
+        "Command returned bulk string reply while integer reply was expected");
   }
 
   @Theory
   public void failsToParseLongReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
       @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
-    failsToParseReply(src, bufferSize, longReply(),
-        "Command returned array reply while integer reply reply was expected");
+    failsToParseReply(src, bufferSize, longReply(), "Command returned array reply while integer reply was expected");
   }
 
   @Theory
@@ -178,7 +176,7 @@ public class RepliesTest {
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeInteger(num));
     failsToParseReply(src, bufferSize, simpleStringReply(),
-        "Command returned integer reply while simple string reply reply was expected");
+        "Command returned integer reply while simple string reply was expected");
   }
 
   @Theory
@@ -186,7 +184,7 @@ public class RepliesTest {
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeBulkString(bytes));
     failsToParseReply(src, bufferSize, simpleStringReply(),
-        "Command returned bulk string reply while simple string reply reply was expected");
+        "Command returned bulk string reply while simple string reply was expected");
   }
 
   @Theory
@@ -194,7 +192,7 @@ public class RepliesTest {
       @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
     failsToParseReply(src, bufferSize, simpleStringReply(),
-        "Command returned array reply while simple string reply reply was expected");
+        "Command returned array reply while simple string reply was expected");
   }
 
   @Theory
@@ -230,7 +228,7 @@ public class RepliesTest {
     ByteBuffer src = ByteBuffer.wrap(encodeInteger(num));
     BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     failsToParseReply(src, bufferSize, bulkStringReply(bulkStringBuilderFactory),
-        "Command returned integer reply while bulk string reply reply was expected");
+        "Command returned integer reply while bulk string reply was expected");
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
@@ -241,7 +239,7 @@ public class RepliesTest {
     ByteBuffer src = ByteBuffer.wrap(encodeSimpleString(s));
     BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     failsToParseReply(src, bufferSize, bulkStringReply(bulkStringBuilderFactory),
-        "Command returned simple string reply while bulk string reply reply was expected");
+        "Command returned simple string reply while bulk string reply was expected");
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
@@ -251,7 +249,7 @@ public class RepliesTest {
     ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
     BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     failsToParseReply(src, bufferSize, bulkStringReply(bulkStringBuilderFactory),
-        "Command returned array reply while bulk string reply reply was expected");
+        "Command returned array reply while bulk string reply was expected");
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
@@ -296,7 +294,7 @@ public class RepliesTest {
     @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);
     failsToParseReply(src, bufferSize, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory),
-        "Command returned integer reply while array reply reply was expected");
+        "Command returned integer reply while array reply was expected");
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
@@ -309,7 +307,7 @@ public class RepliesTest {
     @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);
     failsToParseReply(src, bufferSize, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory),
-        "Command returned simple string reply while array reply reply was expected");
+        "Command returned simple string reply while array reply was expected");
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
@@ -321,7 +319,7 @@ public class RepliesTest {
     @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);
     failsToParseReply(src, bufferSize, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory),
-        "Command returned bulk string reply while array reply reply was expected");
+        "Command returned bulk string reply while array reply was expected");
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
