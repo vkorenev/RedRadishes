@@ -37,6 +37,7 @@ import static redradishes.decoder.Replies.simpleStringReply;
 import static redradishes.decoder.parser.TestUtil.assertNoFailure;
 import static redradishes.decoder.parser.TestUtil.assertNoResult;
 import static redradishes.decoder.parser.TestUtil.encodeArray;
+import static redradishes.decoder.parser.TestUtil.encodeArrayOfArrays;
 import static redradishes.decoder.parser.TestUtil.encodeByteString;
 import static redradishes.decoder.parser.TestUtil.encodeError;
 import static redradishes.decoder.parser.TestUtil.encodeInteger;
@@ -87,6 +88,14 @@ public class RepliesTest {
   }
 
   @Theory
+  public void failsToParseIntegerReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
+      @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
+    ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
+    failsToParseReply(src, bufferSize, integerReply(),
+        "Command returned array reply while integer reply reply was expected");
+  }
+
+  @Theory
   public void parsesLongReply(@ForAll long num, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeInteger(num));
     assertThat(parseReply(src, bufferSize, longReply(), Function.identity(), assertNoFailure(), charsetDecoder),
@@ -118,6 +127,14 @@ public class RepliesTest {
   }
 
   @Theory
+  public void failsToParseLongReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
+      @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
+    ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
+    failsToParseReply(src, bufferSize, longReply(),
+        "Command returned array reply while integer reply reply was expected");
+  }
+
+  @Theory
   public void parsesSimpleStringReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeSimpleString(s));
@@ -138,6 +155,14 @@ public class RepliesTest {
   public void parsesErrorSimpleStringReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
       @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
     parsesError(s, bufferSize, simpleStringReply());
+  }
+
+  @Theory
+  public void failsToParseSimpleStringReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
+      @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
+    ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
+    failsToParseReply(src, bufferSize, simpleStringReply(),
+        "Command returned array reply while simple string reply reply was expected");
   }
 
   @Theory
@@ -185,6 +210,16 @@ public class RepliesTest {
     BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     failsToParseReply(src, bufferSize, bulkStringReply(bulkStringBuilderFactory),
         "Command returned simple string reply while bulk string reply reply was expected");
+    verifyZeroInteractions(bulkStringBuilderFactory);
+  }
+
+  @Theory
+  public void failsToParseBulkStringReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
+      @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
+    ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
+    BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
+    failsToParseReply(src, bufferSize, bulkStringReply(bulkStringBuilderFactory),
+        "Command returned array reply while bulk string reply reply was expected");
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 

@@ -7,6 +7,6 @@ public class IntegerReplyParser<T> extends AnyReplyParser<T> {
   private static final UnexpectedReplyTypeParsers UNEXPECTED = new UnexpectedReplyTypeParsers("integer reply");
 
   public IntegerReplyParser(Parser<T> parser) {
-    super(UNEXPECTED.simpleStringParser(), errorParser(), parser, nilParser(), new UnexpectedArrayReplyParser<>());
+    super(UNEXPECTED.simpleStringParser(), errorParser(), parser, nilParser(), UNEXPECTED.arrayParser());
   }
 }

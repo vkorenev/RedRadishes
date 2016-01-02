@@ -92,6 +92,15 @@ public class TestUtil {
     return "*-1\r\n".getBytes(US_ASCII);
   }
 
+  public static byte[] encodeArrayOfArrays(byte[][][] arrays) {
+    ByteArrayDataOutput out = ByteStreams.newDataOutput();
+    writeLenPrefix('*', arrays.length, out);
+    for (byte[][] array : arrays) {
+      writeArray(array, out);
+    }
+    return out.toByteArray();
+  }
+
   public static byte[] encodeScanReply(long cursor, byte[][] elements) {
     ByteArrayDataOutput out = ByteStreams.newDataOutput();
     writeLenPrefix('*', 2, out);

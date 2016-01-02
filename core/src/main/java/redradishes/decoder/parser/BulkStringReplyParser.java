@@ -9,6 +9,6 @@ public class BulkStringReplyParser<T> extends AnyReplyParser<T> {
 
   public BulkStringReplyParser(IntFunction<ReplyParser<T>> bodyParserFactory) {
     super(UNEXPECTED.simpleStringParser(), errorParser(), UNEXPECTED.integerParser(),
-        new LenParser<>(bodyParserFactory), new UnexpectedArrayReplyParser<>());
+        new LenParser<>(bodyParserFactory), UNEXPECTED.arrayParser());
   }
 }
