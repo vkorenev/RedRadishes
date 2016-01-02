@@ -38,7 +38,7 @@ import static redradishes.decoder.parser.TestUtil.assertNoFailure;
 import static redradishes.decoder.parser.TestUtil.assertNoResult;
 import static redradishes.decoder.parser.TestUtil.encodeArray;
 import static redradishes.decoder.parser.TestUtil.encodeArrayOfArrays;
-import static redradishes.decoder.parser.TestUtil.encodeByteString;
+import static redradishes.decoder.parser.TestUtil.encodeBulkString;
 import static redradishes.decoder.parser.TestUtil.encodeError;
 import static redradishes.decoder.parser.TestUtil.encodeInteger;
 import static redradishes.decoder.parser.TestUtil.encodeNilArray;
@@ -175,7 +175,7 @@ public class RepliesTest {
 
   @Theory
   public void parsesBulkStringReply(@ForAll byte[] bytes, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
-    ByteBuffer src = ByteBuffer.wrap(encodeByteString(bytes));
+    ByteBuffer src = ByteBuffer.wrap(encodeBulkString(bytes));
     assertThat(parseReply(src, bufferSize, bulkStringReply(new TestBulkStringBuilderFactory()), Function.identity(),
         assertNoFailure(), charsetDecoder), equalTo(bytes));
     verifyZeroInteractions(charsetDecoder);

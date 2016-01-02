@@ -69,7 +69,7 @@ public class TestUtil {
     return (":" + num + "\r\n").getBytes(US_ASCII);
   }
 
-  public static byte[] encodeByteString(byte[] bytes) {
+  public static byte[] encodeBulkString(byte[] bytes) {
     byte[] header = ('$' + Integer.toString(bytes.length) + "\r\n").getBytes(US_ASCII);
     byte[] target = Arrays.copyOf(header, header.length + bytes.length + 2);
     System.arraycopy(bytes, 0, target, header.length, bytes.length);
