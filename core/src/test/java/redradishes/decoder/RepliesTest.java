@@ -158,6 +158,14 @@ public class RepliesTest {
   }
 
   @Theory
+  public void failsToParseSimpleStringReplyIfIntegerReplyIsFound(@ForAll long num,
+      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+    ByteBuffer src = ByteBuffer.wrap(encodeInteger(num));
+    failsToParseReply(src, bufferSize, simpleStringReply(),
+        "Command returned integer reply while simple string reply reply was expected");
+  }
+
+  @Theory
   public void failsToParseSimpleStringReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
       @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
