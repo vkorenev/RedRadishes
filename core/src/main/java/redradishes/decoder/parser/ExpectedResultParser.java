@@ -38,8 +38,4 @@ class ExpectedResultParser<T> implements Parser<T> {
     }
     return resultHandler.apply(reply);
   }
-
-  static <T> Parser<T> nilParser() {
-    return new ExpectedResultParser<>(new byte[]{'-', '1', '\r', '\n'}, null);
-  }
 }

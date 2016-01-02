@@ -7,7 +7,6 @@ import java.util.function.IntFunction;
 
 import static redradishes.decoder.Replies.bulkStringReply;
 import static redradishes.decoder.parser.ErrorParser.errorParser;
-import static redradishes.decoder.parser.ExpectedResultParser.nilParser;
 import static redradishes.decoder.parser.ReplyParser.combine;
 
 public class ScanReplyParser<T> extends AnyReplyParser<ScanResult<T>> {
@@ -16,7 +15,7 @@ public class ScanReplyParser<T> extends AnyReplyParser<ScanResult<T>> {
   private static final ReplyParser<Long> CURSOR_PARSER = bulkStringReply(BulkStringBuilders._long());
 
   public ScanReplyParser(IntFunction<Parser<T>> elementsParserFactory) {
-    super(UNEXPECTED.simpleStringParser(), errorParser(), UNEXPECTED.integerParser(), nilParser(),
+    super(UNEXPECTED.simpleStringParser(), errorParser(), UNEXPECTED.integerParser(), UNEXPECTED.nilBulkStringParser(),
         scanResultParser(elementsParserFactory));
   }
 

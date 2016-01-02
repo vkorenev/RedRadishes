@@ -38,11 +38,13 @@ class UnexpectedReplyTypeParsers {
           NOOP_BULK_STRING_PARSER, NOOP_ARRAY_PARSER);
 
   private final String unexpectedSimpleStringMeggage;
+  private final String unexpectedBulkStringMeggage;
   private final String unexpectedIntegerMessage;
   private final String unexpectedArrayMessage;
 
   UnexpectedReplyTypeParsers(String expectedType) {
     unexpectedSimpleStringMeggage = wrongType("simple string", expectedType);
+    unexpectedBulkStringMeggage = wrongType("bulk string", expectedType);
     unexpectedIntegerMessage = wrongType("integer", expectedType);
     unexpectedArrayMessage = wrongType("array", expectedType);
   }
@@ -53,6 +55,11 @@ class UnexpectedReplyTypeParsers {
 
   <T> ReplyParser<T> simpleStringParser() {
     return NOOP_SIMPLE_STRING_PARSER.fail(value -> new ReplyParseException(unexpectedSimpleStringMeggage));
+  }
+
+  <T> ReplyParser<T> nilBulkStringParser() {
+    return new LenParser<>(len -> new BulkStringParser<>(len, NOOP_BULK_STRING_BUILDER_FACTORY)
+        .fail(value -> new ReplyParseException(unexpectedBulkStringMeggage)));
   }
 
   <T> ReplyParser<T> integerParser() {

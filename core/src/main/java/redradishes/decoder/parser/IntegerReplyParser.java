@@ -1,12 +1,12 @@
 package redradishes.decoder.parser;
 
 import static redradishes.decoder.parser.ErrorParser.errorParser;
-import static redradishes.decoder.parser.ExpectedResultParser.nilParser;
 
 public class IntegerReplyParser<T> extends AnyReplyParser<T> {
   private static final UnexpectedReplyTypeParsers UNEXPECTED = new UnexpectedReplyTypeParsers("integer reply");
 
   public IntegerReplyParser(Parser<T> parser) {
-    super(UNEXPECTED.simpleStringParser(), errorParser(), parser, nilParser(), UNEXPECTED.arrayParser());
+    super(UNEXPECTED.simpleStringParser(), errorParser(), parser, UNEXPECTED.nilBulkStringParser(),
+        UNEXPECTED.arrayParser());
   }
 }
