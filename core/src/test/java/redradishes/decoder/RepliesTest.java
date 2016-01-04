@@ -97,7 +97,7 @@ public class RepliesTest {
 
   @Theory
   public void failsToParseIntegerReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
-      @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
+      @TestedOn(ints = {3, 5, 10, 100, 1000}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
     failsToParseReply(src, bufferSize, integerReply(), "Command returned array reply while integer reply was expected");
   }
@@ -143,7 +143,7 @@ public class RepliesTest {
 
   @Theory
   public void failsToParseLongReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
-      @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
+      @TestedOn(ints = {3, 5, 10, 100, 1000}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
     failsToParseReply(src, bufferSize, longReply(), "Command returned array reply while integer reply was expected");
   }
@@ -189,7 +189,7 @@ public class RepliesTest {
 
   @Theory
   public void failsToParseSimpleStringReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
-      @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
+      @TestedOn(ints = {3, 5, 10, 100, 1000}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
     failsToParseReply(src, bufferSize, simpleStringReply(),
         "Command returned array reply while simple string reply was expected");
@@ -245,7 +245,7 @@ public class RepliesTest {
 
   @Theory
   public void failsToParseBulkStringReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
-      @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
+      @TestedOn(ints = {3, 5, 10, 100, 1000}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
     BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     failsToParseReply(src, bufferSize, bulkStringReply(bulkStringBuilderFactory),
@@ -254,7 +254,7 @@ public class RepliesTest {
   }
 
   @Theory
-  public void parsesArrayReply(@ForAll byte[][] arrays, @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
+  public void parsesArrayReply(@ForAll byte[][] arrays, @TestedOn(ints = {3, 5, 10, 100, 1000}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArray(arrays));
     assertThat(parseReply(src, bufferSize, arrayReply(array(byte[][]::new), new TestBulkStringBuilderFactory()),
         Function.identity(), assertNoFailure(), charsetDecoder), equalTo(arrays));
@@ -325,7 +325,7 @@ public class RepliesTest {
 
   @Theory
   public void parsesScanReply(@ForAll(sampleSize = 10) @InRange(minLong = 0) long cursor, @ForAll byte[][] elements,
-      @TestedOn(ints = {2, 3, 5, 10, 100, 1000}) int bufferSize) {
+      @TestedOn(ints = {3, 5, 10, 100, 1000}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeScanReply(cursor, elements));
     ScanResult<byte[][]> scanResult =
         parseReply(src, bufferSize, scanReply(array(byte[][]::new), new TestBulkStringBuilderFactory()),
