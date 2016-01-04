@@ -15,41 +15,59 @@ public interface CombiningReplyParser<T1, T2> {
       public <U> U parseReply(ByteBuffer buffer, BiFunction<? super T1, ? super T2, ? extends U> resultHandler,
           PartialReplyHandler<? super T1, ? super T2, U> partialReplyHandler,
           ReplyParser.FailureHandler<U> failureHandler, CharsetDecoder charsetDecoder) {
-        return parse1(parser1, buffer, resultHandler, partialReplyHandler, failureHandler, charsetDecoder);
+        return parse1(buffer, resultHandler, partialReplyHandler, failureHandler, charsetDecoder, parser1);
       }
 
-      private <U> U parse1(ReplyParser<? extends T1> parser1, ByteBuffer buffer,
-          BiFunction<? super T1, ? super T2, ? extends U> resultHandler,
+      private <U> U parse1(ByteBuffer buffer, BiFunction<? super T1, ? super T2, ? extends U> resultHandler,
           PartialReplyHandler<? super T1, ? super T2, U> partialReplyHandler,
-          ReplyParser.FailureHandler<U> failureHandler, CharsetDecoder charsetDecoder) {
-        return parser1.parseReply(buffer, new Function<T1, U>() {
-          @Override
-          public U apply(@Nullable T1 value1) {
-            return parse2(buffer, resultHandler, partialReplyHandler, failureHandler, value1, parser2);
-          }
+          ReplyParser.FailureHandler<U> failureHandler, CharsetDecoder charsetDecoder,
+          ReplyParser<? extends T1> parser1) {
+        return parser1.parseReply(buffer,
+            value1 -> parse2(buffer, resultHandler, partialReplyHandler, failureHandler, charsetDecoder, value1,
+                parser2), partial -> partialReplyHandler.partialReply(new CombiningReplyParser<T1, T2>() {
+              @Override
+              public <U1> U1 parseReply(ByteBuffer buffer,
+                  BiFunction<? super T1, ? super T2, ? extends U1> resultHandler,
+                  PartialReplyHandler<? super T1, ? super T2, U1> partialReplyHandler,
+                  ReplyParser.FailureHandler<U1> failureHandler, CharsetDecoder charsetDecoder) {
+                return parse1(buffer, resultHandler, partialReplyHandler, failureHandler, charsetDecoder, partial);
+              }
+            }),
+            throwable -> parse2failing(buffer, partialReplyHandler, failureHandler, charsetDecoder, throwable, parser2),
+            charsetDecoder);
+      }
 
-          private <U1> U1 parse2(ByteBuffer buffer, BiFunction<? super T1, ? super T2, ? extends U1> resultHandler,
-              PartialReplyHandler<? super T1, ? super T2, U1> partialReplyHandler,
-              ReplyParser.FailureHandler<U1> failureHandler, @Nullable T1 value1, ReplyParser<? extends T2> parser2) {
-            return parser2.parseReply(buffer, value2 -> resultHandler.apply(value1, value2),
-                partial -> partialReplyHandler.partialReply(new CombiningReplyParser<T1, T2>() {
-                  @Override
-                  public <U2> U2 parseReply(ByteBuffer buffer,
-                      BiFunction<? super T1, ? super T2, ? extends U2> resultHandler,
-                      PartialReplyHandler<? super T1, ? super T2, U2> partialReplyHandler,
-                      ReplyParser.FailureHandler<U2> failureHandler, CharsetDecoder charsetDecoder) {
-                    return parse2(buffer, resultHandler, partialReplyHandler, failureHandler, value1, partial);
-                  }
-                }), failureHandler, charsetDecoder);
-          }
-        }, partial -> partialReplyHandler.partialReply(new CombiningReplyParser<T1, T2>() {
-          @Override
-          public <U1> U1 parseReply(ByteBuffer buffer, BiFunction<? super T1, ? super T2, ? extends U1> resultHandler,
-              PartialReplyHandler<? super T1, ? super T2, U1> partialReplyHandler,
-              ReplyParser.FailureHandler<U1> failureHandler, CharsetDecoder charsetDecoder) {
-            return parse1(partial, buffer, resultHandler, partialReplyHandler, failureHandler, charsetDecoder);
-          }
-        }), failureHandler, charsetDecoder);
+      private <U1> U1 parse2(ByteBuffer buffer, BiFunction<? super T1, ? super T2, ? extends U1> resultHandler,
+          PartialReplyHandler<? super T1, ? super T2, U1> partialReplyHandler,
+          ReplyParser.FailureHandler<U1> failureHandler, CharsetDecoder charsetDecoder, @Nullable T1 value1,
+          ReplyParser<? extends T2> parser2) {
+        return parser2.parseReply(buffer, value2 -> resultHandler.apply(value1, value2),
+            partial -> partialReplyHandler.partialReply(new CombiningReplyParser<T1, T2>() {
+              @Override
+              public <U2> U2 parseReply(ByteBuffer buffer,
+                  BiFunction<? super T1, ? super T2, ? extends U2> resultHandler,
+                  PartialReplyHandler<? super T1, ? super T2, U2> partialReplyHandler,
+                  ReplyParser.FailureHandler<U2> failureHandler, CharsetDecoder charsetDecoder) {
+                return parse2(buffer, resultHandler, partialReplyHandler, failureHandler, charsetDecoder, value1,
+                    partial);
+              }
+            }), failureHandler, charsetDecoder);
+      }
+
+      private <U1> U1 parse2failing(ByteBuffer buffer,
+          PartialReplyHandler<? super T1, ? super T2, U1> partialReplyHandler,
+          ReplyParser.FailureHandler<U1> failureHandler, CharsetDecoder charsetDecoder, Throwable throwable1,
+          ReplyParser<? extends T2> parser2) {
+        return parser2.parseReply(buffer, value2 -> failureHandler.failure(throwable1),
+            partial -> partialReplyHandler.partialReply(new CombiningReplyParser<T1, T2>() {
+              @Override
+              public <U2> U2 parseReply(ByteBuffer buffer,
+                  BiFunction<? super T1, ? super T2, ? extends U2> resultHandler,
+                  PartialReplyHandler<? super T1, ? super T2, U2> partialReplyHandler,
+                  ReplyParser.FailureHandler<U2> failureHandler, CharsetDecoder charsetDecoder) {
+                return parse2failing(buffer, partialReplyHandler, failureHandler, charsetDecoder, throwable1, partial);
+              }
+            }), throwable2 -> failureHandler.failure(throwable1), charsetDecoder);
       }
     };
   }

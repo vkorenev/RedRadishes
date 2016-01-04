@@ -5,9 +5,10 @@ import java.util.function.IntFunction;
 import static redradishes.decoder.parser.ErrorParser.errorParser;
 
 public class BulkStringReplyParser<T> extends AnyReplyParser<T> {
+  private static final UnexpectedReplyTypeParsers UNEXPECTED = new UnexpectedReplyTypeParsers("bulk string");
+
   public BulkStringReplyParser(IntFunction<ReplyParser<T>> bodyParserFactory) {
-    super(new UnexpectedSimpleReplyParser<>("simple string"), errorParser(),
-        new UnexpectedSimpleReplyParser<>("integer"), new LenParser<>(bodyParserFactory),
-        new UnexpectedArrayReplyParser<>());
+    super(UNEXPECTED.simpleStringParser(), errorParser(), UNEXPECTED.integerParser(),
+        new LenParser<>(bodyParserFactory), UNEXPECTED.arrayParser());
   }
 }

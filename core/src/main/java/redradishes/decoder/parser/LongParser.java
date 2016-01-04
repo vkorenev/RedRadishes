@@ -12,8 +12,8 @@ public abstract class LongParser {
       return doParse(buffer, resultHandler, partialHandler, false, 0, SIGN_OR_DIGIT);
     }
   };
-  public static final Parser<Integer> INTEGER_PARSER = new ParserAdaptor<>(PARSER, l -> (int) l);
-  public static final Parser<Long> LONG_PARSER = new ParserAdaptor<>(PARSER, l -> l);
+  public static final Parser<Integer> INTEGER_PARSER = PARSER.mapToParser(l -> (int) l);
+  public static final Parser<Long> LONG_PARSER = PARSER.mapToParser(l -> l);
   private static final int SIGN_OR_DIGIT = 0;
   private static final int DIGIT = 1;
   private static final int WAITING_FOR_LF = 2;
@@ -79,6 +79,10 @@ public abstract class LongParser {
       }
     }
     return partialHandler.partial(new LongPartial(negative, num, state));
+  }
+
+  <T> Parser<T> mapToParser(LongFunction<T> longFunction) {
+    return new ParserAdaptor<>(this, longFunction);
   }
 
   interface PartialHandler<T> {

@@ -1,55 +1,46 @@
 package redradishes.decoder.parser;
 
-import com.google.common.collect.AbstractIterator;
 import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import redradishes.decoder.parser.ReplyParser.FailureHandler;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.function.Function;
 
-import static java.lang.Math.min;
 import static java.nio.charset.StandardCharsets.US_ASCII;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 public class TestUtil {
-  public static Iterator<ByteBuffer> split(byte[] bytes, int chunkSize) {
-    return new AbstractIterator<ByteBuffer>() {
-      private final ByteBuffer byteBuffer = ByteBuffer.allocate(chunkSize + 10);
-      private int offset = 0;
-
-      {
-        byteBuffer.flip();
-      }
-
-      @Override
-      protected ByteBuffer computeNext() {
-        if (offset < bytes.length) {
-          byteBuffer.compact();
-          int size = min(byteBuffer.remaining(), min(chunkSize, bytes.length - offset));
-          byteBuffer.put(bytes, offset, size);
-          offset += size;
-          byteBuffer.flip();
-          return byteBuffer;
-        } else {
-          return endOfData();
-        }
-      }
-    };
-  }
-
-  static <T, U> U parse(Iterator<ByteBuffer> chunks, Parser<T> parser, Function<? super T, U> resultHandler,
-      CharsetDecoder charsetDecoder) {
-    return parser.parse(chunks.next(), resultHandler, partial -> parse(chunks, partial, resultHandler, charsetDecoder),
-        charsetDecoder);
-  }
-
-  public static <T, U> U parseReply(Iterator<ByteBuffer> chunks, ReplyParser<T> parser,
+  public static <T, U> U parseReply(ByteBuffer byteBuffer, int chunkSize, ReplyParser<T> parser,
       Function<? super T, U> resultHandler, FailureHandler<U> failureHandler, CharsetDecoder charsetDecoder) {
-    return parser.parseReply(chunks.next(), resultHandler,
-        partial -> parseReply(chunks, partial, resultHandler, failureHandler, charsetDecoder), failureHandler,
-        charsetDecoder);
+    ByteBuffer src;
+    if (byteBuffer.remaining() > chunkSize) {
+      src = byteBuffer.slice();
+      src.limit(src.position() + chunkSize);
+    } else {
+      src = byteBuffer;
+    }
+    class Ref {
+      ReplyParser<? extends T> partial;
+    }
+    Ref ref = new Ref();
+    U result = parser.parseReply(src, resultHandler, partial -> {
+      ref.partial = partial;
+      return null;
+    }, failureHandler, charsetDecoder);
+    if (ref.partial != null) {
+      assertThat(src, not(sameInstance(byteBuffer)));
+      byteBuffer.position(byteBuffer.position() + chunkSize - src.remaining());
+      return parseReply(byteBuffer, chunkSize, ref.partial, resultHandler, failureHandler, charsetDecoder);
+    }
+    assertFalse("Remaining bytes: " + byteBuffer.remaining(), byteBuffer.hasRemaining());
+    return result;
   }
 
   public static <T, R> Function<T, R> assertNoResult() {
@@ -64,13 +55,65 @@ public class TestUtil {
     };
   }
 
-  public static byte[] getByteString(byte[] bytes) {
+  public static byte[] encodeSimpleString(String value) {
+    assumeTrue(value.indexOf('\r') == -1 && value.indexOf('\n') == -1);
+    return ("+" + value + "\r\n").getBytes(US_ASCII);
+  }
+
+  public static byte[] encodeError(String value) {
+    assumeTrue(value.indexOf('\r') == -1 && value.indexOf('\n') == -1);
+    return ("-" + value + "\r\n").getBytes(US_ASCII);
+  }
+
+  public static byte[] encodeInteger(long num) {
+    return (":" + num + "\r\n").getBytes(US_ASCII);
+  }
+
+  public static byte[] encodeBulkString(byte[] bytes) {
     byte[] header = ('$' + Integer.toString(bytes.length) + "\r\n").getBytes(US_ASCII);
     byte[] target = Arrays.copyOf(header, header.length + bytes.length + 2);
     System.arraycopy(bytes, 0, target, header.length, bytes.length);
     target[target.length - 2] = '\r';
     target[target.length - 1] = '\n';
     return target;
+  }
+
+  public static byte[] encodeNilBulkString() {
+    return "$-1\r\n".getBytes(US_ASCII);
+  }
+
+  public static byte[] encodeArray(byte[][] elements) {
+    ByteArrayDataOutput out = ByteStreams.newDataOutput();
+    writeArray(elements, out);
+    return out.toByteArray();
+  }
+
+  public static byte[] encodeNilArray() {
+    return "*-1\r\n".getBytes(US_ASCII);
+  }
+
+  public static byte[] encodeArrayOfArrays(byte[][][] arrays) {
+    ByteArrayDataOutput out = ByteStreams.newDataOutput();
+    writeLenPrefix('*', arrays.length, out);
+    for (byte[][] array : arrays) {
+      writeArray(array, out);
+    }
+    return out.toByteArray();
+  }
+
+  public static byte[] encodeScanReply(long cursor, byte[][] elements) {
+    ByteArrayDataOutput out = ByteStreams.newDataOutput();
+    writeLenPrefix('*', 2, out);
+    writeByteString(Long.toString(cursor).getBytes(US_ASCII), out);
+    writeArray(elements, out);
+    return out.toByteArray();
+  }
+
+  private static void writeArray(byte[][] elements, ByteArrayDataOutput out) {
+    writeLenPrefix('*', elements.length, out);
+    for (byte[] bytes : elements) {
+      writeByteString(bytes, out);
+    }
   }
 
   public static void writeByteString(byte[] bytes, ByteArrayDataOutput out) {
