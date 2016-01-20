@@ -54,20 +54,20 @@ class UnexpectedReplyTypeParsers {
   }
 
   <T> ReplyParser<T> simpleStringParser() {
-    return NOOP_SIMPLE_STRING_PARSER.fail(value -> new ReplyParseException(unexpectedSimpleStringMeggage));
+    return NOOP_SIMPLE_STRING_PARSER.fail(new ReplyParseException(unexpectedSimpleStringMeggage));
   }
 
   <T> ReplyParser<T> nilBulkStringParser() {
     return new LenParser<>(len -> new BulkStringParser<>(len, NOOP_BULK_STRING_BUILDER_FACTORY)
-        .fail(value -> new ReplyParseException(unexpectedBulkStringMeggage)));
+        .fail(new ReplyParseException(unexpectedBulkStringMeggage)));
   }
 
   <T> ReplyParser<T> integerParser() {
-    return NOOP_INTEGER_PARSER.fail(value -> new ReplyParseException(unexpectedIntegerMessage));
+    return NOOP_INTEGER_PARSER.fail(new ReplyParseException(unexpectedIntegerMessage));
   }
 
   <T> ReplyParser<T> arrayParser() {
-    return NOOP_ARRAY_PARSER.fail(value -> new ReplyParseException(unexpectedArrayMessage));
+    return NOOP_ARRAY_PARSER.fail(new ReplyParseException(unexpectedArrayMessage));
   }
 
   private static <B, R> BulkStringBuilderFactory<B, R> noopBulkStringBuilderFactory() {
