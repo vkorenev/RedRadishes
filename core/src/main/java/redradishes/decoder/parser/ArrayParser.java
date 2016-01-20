@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.util.function.Function;
 
-public class ArrayParser<T, E> implements Parser<T> {
+public class ArrayParser<T, E> implements ReplyParser<T> {
   private final int len;
   private final ArrayBuilderFactory<E, ? extends T> builderFactory;
   private final ReplyParser<E> elementParser;
@@ -19,19 +19,20 @@ public class ArrayParser<T, E> implements Parser<T> {
   }
 
   @Override
-  public <U> U parse(ByteBuffer buffer, Function<? super T, U> resultHandler,
-      PartialHandler<? super T, U> partialHandler, CharsetDecoder charsetDecoder) {
-    return doParse(buffer, resultHandler, partialHandler, builderFactory.create(len), len, elementParser,
+  public <U> U parseReply(ByteBuffer buffer, Function<? super T, U> resultHandler,
+      PartialReplyHandler<? super T, U> partialReplyHandler, FailureHandler<U> failureHandler,
+      CharsetDecoder charsetDecoder) {
+    return doParse(buffer, resultHandler, partialReplyHandler, builderFactory.create(len), len, elementParser,
         charsetDecoder);
   }
 
   private <U> U doParse(ByteBuffer buffer, Function<? super T, U> resultHandler,
-      PartialHandler<? super T, U> partialHandler, ArrayBuilderFactory.Builder<E, ? extends T> builder, int remaining,
-      ReplyParser<? extends E> elemParser, CharsetDecoder charsetDecoder) {
+      PartialReplyHandler<? super T, U> partialReplyHandler, ArrayBuilderFactory.Builder<E, ? extends T> builder,
+      int remaining, ReplyParser<? extends E> elemParser, CharsetDecoder charsetDecoder) {
     while (remaining > 0) {
-      Parser<T> partial = parsePartial(buffer, builder, remaining, elemParser, charsetDecoder);
+      ReplyParser<T> partial = parsePartial(buffer, builder, remaining, elemParser, charsetDecoder);
       if (partial != null) {
-        return partialHandler.partial(partial);
+        return partialReplyHandler.partialReply(partial);
       } else {
         remaining--;
         elemParser = elementParser;
@@ -40,16 +41,17 @@ public class ArrayParser<T, E> implements Parser<T> {
     return resultHandler.apply(builder.build());
   }
 
-  private Parser<T> parsePartial(ByteBuffer buffer, ArrayBuilderFactory.Builder<E, ? extends T> builder, int remaining,
-      ReplyParser<? extends E> elemParser, CharsetDecoder charsetDecoder) {
+  private ReplyParser<T> parsePartial(ByteBuffer buffer, ArrayBuilderFactory.Builder<E, ? extends T> builder,
+      int remaining, ReplyParser<? extends E> elemParser, CharsetDecoder charsetDecoder) {
     return elemParser.parseReply(buffer, value -> {
       builder.add(value);
       return null;
-    }, partial -> new Parser<T>() {
+    }, partial -> new ReplyParser<T>() {
       @Override
-      public <U1> U1 parse(ByteBuffer buffer, Function<? super T, U1> resultHandler,
-          PartialHandler<? super T, U1> partialHandler, CharsetDecoder charsetDecoder) {
-        return doParse(buffer, resultHandler, partialHandler, builder, remaining, partial, charsetDecoder);
+      public <U> U parseReply(ByteBuffer buffer, Function<? super T, U> resultHandler,
+          PartialReplyHandler<? super T, U> partialReplyHandler, FailureHandler<U> failureHandler,
+          CharsetDecoder charsetDecoder) {
+        return doParse(buffer, resultHandler, partialReplyHandler, builder, remaining, partial, charsetDecoder);
       }
     }, e -> {
       throw Throwables.propagate(e);
