@@ -14,12 +14,13 @@ public class ScanReplyParser<T> extends AnyReplyParser<ScanResult<T>> {
   private static final Parser<Void> L_2_PARSER = new ExpectedResultParser<>(new byte[]{'2', '\r', '\n'}, null);
   private static final ReplyParser<Long> CURSOR_PARSER = bulkStringReply(BulkStringBuilders._long());
 
-  public ScanReplyParser(IntFunction<Parser<T>> elementsParserFactory) {
+  public ScanReplyParser(IntFunction<? extends ReplyParser<T>> elementsParserFactory) {
     super(UNEXPECTED.simpleStringParser(), errorParser(), UNEXPECTED.integerParser(), UNEXPECTED.nilBulkStringParser(),
         scanResultParser(elementsParserFactory));
   }
 
-  private static <T> ReplyParser<ScanResult<T>> scanResultParser(IntFunction<Parser<T>> elementsParserFactory) {
+  private static <T> ReplyParser<ScanResult<T>> scanResultParser(
+      IntFunction<? extends ReplyParser<T>> elementsParserFactory) {
     ReplyParser<T> elementsParser = new ArrayReplyParser<>(elementsParserFactory);
     return combine(L_2_PARSER, combine(CURSOR_PARSER, elementsParser, ScanResult::new), (a, b) -> b);
   }
