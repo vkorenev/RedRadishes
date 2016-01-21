@@ -42,12 +42,12 @@
       <dependency>
         <groupId>org.jboss.xnio</groupId>
         <artifactId>xnio-api</artifactId>
-        <version>3.3.3.Final</version>
+        <version>3.3.4.Final</version>
       </dependency>
       <dependency>
         <groupId>org.jboss.xnio</groupId>
         <artifactId>xnio-nio</artifactId>
-        <version>3.3.3.Final</version>
+        <version>3.3.4.Final</version>
       </dependency>
       <dependency>
         <groupId>org.jboss.logging</groupId>
@@ -57,7 +57,7 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>18.0</version>
+        <version>19.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
