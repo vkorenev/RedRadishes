@@ -21,12 +21,17 @@ import java.nio.charset.CharsetDecoder;
 import java.util.function.Function;
 
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.arrayWithSize;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assume.assumeThat;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 import static redradishes.decoder.ArrayBuilders.array;
 import static redradishes.decoder.Replies.arrayReply;
 import static redradishes.decoder.Replies.bulkStringReply;
@@ -320,6 +325,21 @@ public class RepliesTest {
         mock(BulkStringBuilderFactory.class);
     failsToParseReply(src, bufferSize, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory),
         "Command returned bulk string reply while array reply was expected");
+    verifyZeroInteractions(bulkStringBuilderFactory);
+  }
+
+  @Theory
+  public <E, T> void failsToParseArrayOfBulkStringsReplyIfArrayOfArraysReplyIsFound(
+      @ForAll(sampleSize = 10) byte[][][] arrays, @TestedOn(ints = {3, 5, 10, 100, 1000}) int bufferSize) {
+    assumeThat(arrays, arrayWithSize(greaterThan(0)));
+    ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
+    @SuppressWarnings("unchecked") ArrayBuilderFactory<E, T> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
+    @SuppressWarnings("unchecked") ArrayBuilderFactory.Builder<E, T> builder = mock(ArrayBuilderFactory.Builder.class);
+    when(arrayBuilderFactory.create(anyInt())).thenReturn(builder);
+    @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
+        mock(BulkStringBuilderFactory.class);
+    failsToParseReply(src, bufferSize, arrayReply(arrayBuilderFactory, bulkStringBuilderFactory),
+        "Command returned array reply while bulk string reply was expected");
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
