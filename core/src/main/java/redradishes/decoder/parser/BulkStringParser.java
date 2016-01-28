@@ -38,19 +38,22 @@ public class BulkStringParser<T, B> implements ReplyParser<T> {
         case READING:
           int remaining = buffer.remaining();
           if (remaining >= len) {
+            int chunkLimit = buffer.position() + len;
             if (exception == null) {
-              ByteBuffer src = buffer.slice();
-              src.limit(len);
+              int savedLimit = buffer.limit();
+              buffer.limit(chunkLimit);
               try {
-                result = builderFactory.appendLast(builder, src, charsetDecoder);
-                if (src.hasRemaining()) {
+                result = builderFactory.appendLast(builder, buffer, charsetDecoder);
+                if (buffer.hasRemaining()) {
                   exception = new ReplyParseException("Bulk string decoder has not consumed all input");
                 }
               } catch (Exception e) {
                 exception = e;
+              } finally {
+                buffer.limit(savedLimit);
               }
             }
-            buffer.position(buffer.position() + len);
+            buffer.position(chunkLimit);
             state = WAITING_FOR_CR;
           } else {
             if (exception == null) {
