@@ -88,6 +88,7 @@ public class CommandBuilder {
   }
 
   private static <R> Command<R> define(ReplyParser<? extends R> parser, ConstExpr cmd) {
+    ConstExpr constExpr = cmd.compact();
     return new Command<R>() {
       @Override
       public ReplyParser<? extends R> parser() {
@@ -96,7 +97,7 @@ public class CommandBuilder {
 
       @Override
       public ConstExpr c() {
-        return cmd.compact();
+        return constExpr;
       }
     };
   }
