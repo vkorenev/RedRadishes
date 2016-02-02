@@ -32,6 +32,10 @@ public class RespEncoders {
   private static final ConstExpr MIN_LONG_BULK_STRING =
       charConst('2').append(charConst('0')).append(CR_LF).append(bytesConst(MIN_LONG_BYTES)).compact();
   private static final ConstExpr EMPTY_BULK_STRING = charConst('0').append(CR_LF).compact();
+  private static final IntEncoder ONE_DIGIT_AS_BULK_STRING = charConst('1').append(CR_LF).append(digitEncoder());
+  private static final IntEncoder TWO_DIGITS_AS_BULK_STRING =
+      charConst('2').append(CR_LF).append(bytesEnc().mapToIntEncoder(num -> NUM_BYTES[num - 10]));
+  private static final IntEncoder ARRAY = charConst('*').append(intEnc()).append(CR_LF).compact();
   private static final ThreadLocal<Map<Charset, CharsetEncoder>> charsetDecodersMap =
       new ThreadLocal<Map<Charset, CharsetEncoder>>() {
         @Override
@@ -41,7 +45,7 @@ public class RespEncoders {
       };
 
   public static IntEncoder array() {
-    return charConst('*').append(intEnc()).append(CR_LF);
+    return ARRAY;
   }
 
   private static ConstExpr charConst(char c) {
@@ -105,24 +109,16 @@ public class RespEncoders {
   }
 
   public static Encoder<Integer> intBulkString() {
-    return NEW_ARG.append(IntEncoder.choice(num -> num >= 0 && num <= 9, oneDigitAsBulkString(), IntEncoder
-        .choice(num -> num >= 10 && num <= 99, twoDigitsAsBulkString(),
+    return NEW_ARG.append(IntEncoder.choice(num -> num >= 0 && num <= 9, ONE_DIGIT_AS_BULK_STRING, IntEncoder
+        .choice(num -> num >= 10 && num <= 99, TWO_DIGITS_AS_BULK_STRING,
             longAsBulkString().mapToIntEncoder(Long::valueOf))).map(Integer::intValue)).append(CR_LF);
   }
 
   public static Encoder<Long> longBulkString() {
-    return NEW_ARG.append(Encoder.choice(num -> num >= 0 && num <= 9, oneDigitAsBulkString().map(Long::intValue),
-        Encoder.choice(num -> num >= 10 && num <= 99, twoDigitsAsBulkString().map(Long::intValue),
+    return NEW_ARG.append(Encoder.choice(num -> num >= 0 && num <= 9, ONE_DIGIT_AS_BULK_STRING.map(Long::intValue),
+        Encoder.choice(num -> num >= 10 && num <= 99, TWO_DIGITS_AS_BULK_STRING.map(Long::intValue),
             Encoder.choiceConst(num -> num == Long.MIN_VALUE, MIN_LONG_BULK_STRING, longAsBulkString()))))
         .append(CR_LF);
-  }
-
-  private static IntEncoder oneDigitAsBulkString() {
-    return charConst('1').append(CR_LF).append(digitEncoder());
-  }
-
-  private static IntEncoder twoDigitsAsBulkString() {
-    return charConst('2').append(CR_LF).append(bytesEnc().mapToIntEncoder(num -> NUM_BYTES[num - 10]));
   }
 
   private static Encoder<Long> longAsBulkString() {
@@ -136,7 +132,9 @@ public class RespEncoders {
 
   private static IntEncoder intEnc() {
     return num -> {
-      if (num >= 0 && num <= 9) { return byteConst((byte) ('0' + num)); } else if (num >= 10 && num <= 99) {
+      if (num >= 0 && num <= 9) {
+        return byteConst((byte) ('0' + num));
+      } else if (num >= 10 && num <= 99) {
         return bytesConst(NUM_BYTES[num - 10]);
       }
       return bytesConst(toBytes(num));
