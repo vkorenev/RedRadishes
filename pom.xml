@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>redradishes</groupId>
   <artifactId>redradishes-parent</artifactId>
-  <version>0.2.2</version>
+  <version>0.2.3-SNAPSHOT</version>
   <packaging>pom</packaging>
   <description>Asynchronous Redis Client for Java</description>
   <url>https://github.com/vkorenev/RedRadishes</url>
@@ -17,7 +17,7 @@
   <scm>
     <connection>scm:git:git@github.com:vkorenev/RedRadishes.git</connection>
     <developerConnection>scm:git:git@github.com:vkorenev/RedRadishes.git</developerConnection>
-    <tag>v0.2.2</tag>
+    <tag>HEAD</tag>
     <url>https://github.com/vkorenev/RedRadishes</url>
   </scm>
   <issueManagement>
