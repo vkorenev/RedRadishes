@@ -31,7 +31,7 @@ public class BulkStringBuilders {
       new BulkStringBuilderFactory<CharBuffer, CharSequence>() {
         @Override
         public CharBuffer create(int length, CharsetDecoder charsetDecoder) {
-          return CharBuffer.allocate((int) (length * charsetDecoder.maxCharsPerByte()));
+          return CharBuffer.allocate((int) (length * (double) charsetDecoder.maxCharsPerByte()));
         }
 
         @Override

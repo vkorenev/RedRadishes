@@ -2,6 +2,7 @@ package redradishes.decoder;
 
 import com.pholser.junit.quickcheck.ForAll;
 import com.pholser.junit.quickcheck.From;
+import com.pholser.junit.quickcheck.generator.InRange;
 import com.pholser.junit.quickcheck.generator.java.lang.Encoded;
 import org.junit.Rule;
 import org.junit.contrib.theories.DataPoints;
@@ -14,6 +15,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.function.Function;
@@ -102,5 +104,11 @@ public class BulkStringBuildersTest {
     assertThat(parseReply(src, bufferSize, bulkStringReply(byteArray()), Function.identity(), assertNoFailure(),
         charsetDecoder), equalTo(value));
     verifyZeroInteractions(charsetDecoder);
+  }
+
+  @Theory
+  public void allocatesCharBufferOfTheRightSize(@ForAll @InRange(minInt = 0, maxInt = 100_000_000) int length) {
+    CharBuffer charBuffer = (CharBuffer) charSequence().create(length, UTF_8.newDecoder());
+    assertThat(charBuffer.length(), equalTo(length));
   }
 }
