@@ -36,10 +36,7 @@ public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable 
       @Override
       public void handleFailed(IOException exception, Void v) {
         failure = exception;
-        CommandEncoderDecoder commandEncoderDecoder;
-        while ((commandEncoderDecoder = writerQueue.poll()) != null) {
-          commandEncoderDecoder.fail(failure);
-        }
+        failAllCommands();
       }
 
       @Override
@@ -56,6 +53,13 @@ public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable 
       }
     }, null);
     return connectionFuture;
+  }
+
+  private void failAllCommands() {
+    CommandEncoderDecoder commandEncoderDecoder;
+    while ((commandEncoderDecoder = writerQueue.poll()) != null) {
+      commandEncoderDecoder.fail(failure);
+    }
   }
 
   protected <T> F send_(final Request<T> request) {
@@ -100,6 +104,9 @@ public abstract class XnioRedisClient<F, SF extends F> implements AutoCloseable 
     });
     if (redisClientConnection != null) {
       redisClientConnection.commandAdded();
+    }
+    if (failure != null) {
+      failAllCommands();
     }
     return future;
   }
