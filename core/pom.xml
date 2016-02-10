@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.redradishes</groupId>
     <artifactId>redradishes-parent</artifactId>
-    <version>0.2.6-SNAPSHOT</version>
+    <version>0.2.6</version>
   </parent>
   <artifactId>redradishes-core</artifactId>
   <name>RedRadishes Core</name>
