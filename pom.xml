@@ -5,6 +5,7 @@
   <artifactId>redradishes-parent</artifactId>
   <version>0.2.6-SNAPSHOT</version>
   <packaging>pom</packaging>
+  <name>RedRadishes Parent</name>
   <description>Asynchronous Redis Client for Java</description>
   <url>https://github.com/vkorenev/RedRadishes</url>
   <developers>
