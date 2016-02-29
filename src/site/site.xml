@@ -16,6 +16,9 @@
     </fluidoSkin>
   </custom>
   <body>
+    <menu name="User guide">
+      <item href="introduction.html" name="Introduction"/>
+    </menu>
     <menu ref="modules"/>
     <menu ref="reports"/>
   </body>
