@@ -59,12 +59,12 @@
       <dependency>
         <groupId>org.jboss.xnio</groupId>
         <artifactId>xnio-api</artifactId>
-        <version>3.3.4.Final</version>
+        <version>3.3.5.Final</version>
       </dependency>
       <dependency>
         <groupId>org.jboss.xnio</groupId>
         <artifactId>xnio-nio</artifactId>
-        <version>3.3.4.Final</version>
+        <version>3.3.5.Final</version>
       </dependency>
       <dependency>
         <groupId>org.jboss.logging</groupId>
