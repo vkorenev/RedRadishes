@@ -5,9 +5,9 @@
   <artifactId>redradishes-parent</artifactId>
   <version>0.2.7-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>RedRadishes Parent</name>
+  <name>RedRadishes</name>
   <description>Asynchronous Redis Client for Java</description>
-  <url>https://github.com/vkorenev/RedRadishes</url>
+  <url>http://redradishes.org/</url>
   <developers>
     <developer>
       <name>Vladimir Korenev</name>
@@ -53,6 +53,10 @@
       <id>ossrh</id>
       <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
+    <site>
+      <id>gh-pages</id>
+      <url>git:gh-pages://git@github.com:vkorenev/RedRadishes.git</url>
+    </site>
   </distributionManagement>
   <dependencyManagement>
     <dependencies>
@@ -153,8 +157,34 @@
           <version>1.6</version>
         </plugin>
         <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>0.7.6.201602180812</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-project-info-reports-plugin</artifactId>
+          <version>2.8.1</version>
+        </plugin>
+        <plugin>
           <artifactId>maven-site-plugin</artifactId>
           <version>3.5</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.doxia</groupId>
+              <artifactId>doxia-module-markdown</artifactId>
+              <version>1.7</version>
+            </dependency>
+            <dependency>
+              <groupId>org.codehaus.plexus</groupId>
+              <artifactId>plexus-velocity</artifactId>
+              <version>1.1.8</version>
+            </dependency>
+            <dependency>
+              <groupId>ar.com.synergian</groupId>
+              <artifactId>wagon-git</artifactId>
+              <version>0.2.5</version>
+            </dependency>
+          </dependencies>
         </plugin>
         <plugin>
           <artifactId>maven-release-plugin</artifactId>
@@ -183,7 +213,38 @@
         </plugin>
       </plugins>
     </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
+  <reporting>
+    <plugins>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>javadoc-no-fork</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </reporting>
   <profiles>
     <profile>
       <id>release</id>
@@ -223,4 +284,10 @@
       </build>
     </profile>
   </profiles>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>synergian-repo</id>
+      <url>https://raw.github.com/synergian/wagon-git/releases</url>
+    </pluginRepository>
+  </pluginRepositories>
 </project>
