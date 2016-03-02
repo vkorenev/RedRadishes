@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="Date-Revision-yyyymmdd" content="20160302" />
     <meta http-equiv="Content-Language" content="en" />
-    <title>RedRadishes &#x2013; About</title>
+    <title>RedRadishes &#x2013; Introduction</title>
     <link rel="stylesheet" href="./css/apache-maven-fluido-1.4.min.css" />
     <link rel="stylesheet" href="./css/site.css" />
     <link rel="stylesheet" href="./css/print.css" media="print" />
@@ -71,12 +71,10 @@
                 <ul class="nav nav-list">
                     <li class="nav-header">User guide</li>
                               
-      <li>
+      <li class="active">
   
-                          <a href="introduction.html" title="Introduction">
-          <span class="none"></span>
-        Introduction</a>
-            </li>
+            <a href="#"><span class="none"></span>Introduction</a>
+          </li>
                               <li class="nav-header">Modules</li>
                               
       <li>
@@ -86,111 +84,13 @@
         RedRadishes Core</a>
             </li>
                               <li class="nav-header">Project Documentation</li>
-                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                          
       <li>
   
                           <a href="project-info.html" title="Project Information">
-          <span class="icon-chevron-down"></span>
+          <span class="icon-chevron-right"></span>
         Project Information</a>
-                    <ul class="nav nav-list">
-                    
-      <li>
-  
-                          <a href="integration.html" title="Continuous Integration">
-          <span class="none"></span>
-        Continuous Integration</a>
-            </li>
-                    
-      <li>
-  
-                          <a href="dependency-convergence.html" title="Dependency Convergence">
-          <span class="none"></span>
-        Dependency Convergence</a>
-            </li>
-                    
-      <li>
-  
-                          <a href="dependency-info.html" title="Dependency Information">
-          <span class="none"></span>
-        Dependency Information</a>
-            </li>
-                    
-      <li>
-  
-                          <a href="dependency-management.html" title="Dependency Management">
-          <span class="none"></span>
-        Dependency Management</a>
-            </li>
-                    
-      <li>
-  
-                          <a href="distribution-management.html" title="Distribution Management">
-          <span class="none"></span>
-        Distribution Management</a>
-            </li>
-                    
-      <li class="active">
-  
-            <a href="#"><span class="none"></span>About</a>
-          </li>
-                    
-      <li>
-  
-                          <a href="issue-tracking.html" title="Issue Tracking">
-          <span class="none"></span>
-        Issue Tracking</a>
-            </li>
-                    
-      <li>
-  
-                          <a href="license.html" title="Project License">
-          <span class="none"></span>
-        Project License</a>
-            </li>
-                    
-      <li>
-  
-                          <a href="modules.html" title="Project Modules">
-          <span class="none"></span>
-        Project Modules</a>
-            </li>
-                    
-      <li>
-  
-                          <a href="plugin-management.html" title="Plugin Management">
-          <span class="none"></span>
-        Plugin Management</a>
-            </li>
-                    
-      <li>
-  
-                          <a href="plugins.html" title="Project Plugins">
-          <span class="none"></span>
-        Project Plugins</a>
-            </li>
-                    
-      <li>
-  
-                          <a href="team-list.html" title="Project Team">
-          <span class="none"></span>
-        Project Team</a>
-            </li>
-                    
-      <li>
-  
-                          <a href="source-repository.html" title="Source Repository">
-          <span class="none"></span>
-        Source Repository</a>
-            </li>
-                    
-      <li>
-  
-                          <a href="project-summary.html" title="Project Summary">
-          <span class="none"></span>
-        Project Summary</a>
-            </li>
-              </ul>
-        </li>
+                  </li>
             </ul>
                 
                     
@@ -219,18 +119,45 @@
         <div id="bodyColumn"  class="span10" >
                                   
             <div class="section">
-<h2><a name="About_RedRadishes"></a>About RedRadishes</h2><a name="About_RedRadishes"></a>
-<p>Asynchronous Redis Client for Java</p>
-<div class="section">
-<h3><a name="Project_Modules"></a>Project Modules</h3><a name="Project_Modules"></a>
-<p>This project has declared the following modules:</p>
-<table border="0" class="table table-striped">
-<tr class="a">
-<th>Name</th>
-<th>Description</th></tr>
-<tr class="b">
-<td><a href="redradishes-core/index.html">RedRadishes Core</a></td>
-<td>Asynchronous Redis Client for Java</td></tr></table></div></div>
+<h2><a name="Introduction"></a>Introduction</h2>
+<p>This example requires the following imports:</p>
+
+<div class="source">
+<div class="source"><pre class="prettyprint">import redradishes.commands.Command1;
+import redradishes.java8.RedisClient;
+import redradishes.java8.RedisClientFactory;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.CompletableFuture;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static redradishes.commands.CommandBuilder.command;
+import static redradishes.decoder.BulkStringBuilders.string;
+import static redradishes.decoder.Replies.bulkStringReply;
+import static redradishes.encoder.Encoders.strArg;
+</pre></div></div>
+<p>Command object defines command arguments and return type. See <a class="externalLink" href="http://redis.io/commands">Redis Command Reference</a> to look up command arguments and return type. Command objects are immutable and thread safe. It is a good practice to create them only once in a program.</p>
+
+<div class="source">
+<div class="source"><pre class="prettyprint">private static final Command1&lt;CharSequence, String&gt; GET =
+        command(&quot;GET&quot;).withArg(strArg(UTF_8)).returning(bulkStringReply(string()));
+</pre></div></div>
+<p><tt>RedisClientFactory</tt> contains a pool of IO threads. It is thread safe and can be shared.</p>
+
+<div class="source">
+<div class="source"><pre class="prettyprint">RedisClientFactory factory = new RedisClientFactory(UTF_8, 16);
+</pre></div></div>
+<p>Connection to Redis is established asynchronously. The following call will not throw exceptions.</p>
+
+<div class="source">
+<div class="source"><pre class="prettyprint">RedisClient client = factory.connect(new InetSocketAddress(&quot;localhost&quot;, 6379));
+</pre></div></div>
+<p>Then we can send a command and get an asynchronous result as a future:</p>
+
+<div class="source">
+<div class="source"><pre class="prettyprint">CompletableFuture&lt;String&gt; future = client.send(GET, &quot;key&quot;);
+</pre></div></div></div>
                   </div>
             </div>
           </div>
