@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>LenParser.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">RedRadishes Core</a> &gt; <a href="index.source.html" class="el_package">redradishes.decoder.parser</a> &gt; <span class="el_source">LenParser.java</span></div><h1>LenParser.java</h1><pre class="source lang-java linenums">package redradishes.decoder.parser;
+
+import java.nio.ByteBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.util.function.Function;
+import java.util.function.IntFunction;
+
+class LenParser&lt;T&gt; implements ReplyParser&lt;T&gt; {
+  private final IntFunction&lt;? extends ReplyParser&lt;T&gt;&gt; bodyParserFactory;
+  private final LongParser lengthParser;
+
+  LenParser(IntFunction&lt;? extends ReplyParser&lt;T&gt;&gt; bodyParserFactory) {
+<span class="fc" id="L13">    this(bodyParserFactory, LongParser.PARSER);</span>
+<span class="fc" id="L14">  }</span>
+
+<span class="fc" id="L16">  private LenParser(IntFunction&lt;? extends ReplyParser&lt;T&gt;&gt; bodyParserFactory, LongParser lengthParser) {</span>
+<span class="fc" id="L17">    this.bodyParserFactory = bodyParserFactory;</span>
+<span class="fc" id="L18">    this.lengthParser = lengthParser;</span>
+<span class="fc" id="L19">  }</span>
+
+  @Override
+  public &lt;U&gt; U parseReply(ByteBuffer buffer, Function&lt;? super T, U&gt; resultHandler,
+      PartialReplyHandler&lt;? super T, U&gt; partialReplyHandler, FailureHandler&lt;U&gt; failureHandler,
+      CharsetDecoder charsetDecoder) {
+<span class="fc" id="L25">    return lengthParser.parse(buffer, value -&gt; {</span>
+<span class="fc bfc" id="L26" title="All 2 branches covered.">      if (value == -1) {</span>
+<span class="fc" id="L27">        return resultHandler.apply(null);</span>
+      } else {
+<span class="fc" id="L29">        return bodyParserFactory.apply((int) value)</span>
+<span class="fc" id="L30">            .parseReply(buffer, resultHandler, partialReplyHandler, failureHandler, charsetDecoder);</span>
+      }
+<span class="fc" id="L32">    }, partial -&gt; partialReplyHandler.partialReply(new LenParser&lt;&gt;(bodyParserFactory, partial)));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.6.201602180812</span></div></body></html>

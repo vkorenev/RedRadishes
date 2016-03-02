@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RedisClient.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">RedRadishes Core</a> &gt; <a href="index.source.html" class="el_package">redradishes.guava</a> &gt; <span class="el_source">RedisClient.java</span></div><h1>RedisClient.java</h1><pre class="source lang-java linenums">package redradishes.guava;
+
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import org.xnio.Pool;
+import org.xnio.XnioWorker;
+import redradishes.Request;
+import redradishes.XnioRedisClient;
+import redradishes.commands.Command1;
+import redradishes.commands.Command2;
+import redradishes.commands.Command3;
+
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+
+public class RedisClient extends XnioRedisClient&lt;ListenableFuture, SettableFuture&gt; {
+  RedisClient(XnioWorker worker, SocketAddress address, Pool&lt;ByteBuffer&gt; bufferPool, Charset charset) {
+<span class="fc" id="L20">    super(worker, address, bufferPool, charset);</span>
+<span class="fc" id="L21">  }</span>
+
+  @Override
+  protected ListenableFuture createCancelledFuture() {
+<span class="nc" id="L25">    return Futures.immediateCancelledFuture();</span>
+  }
+
+  @Override
+  protected ListenableFuture createFailedFuture(Throwable exception) {
+<span class="nc" id="L30">    return Futures.immediateFailedFuture(exception);</span>
+  }
+
+  @Override
+  protected SettableFuture createFuture() {
+<span class="fc" id="L35">    return SettableFuture.create();</span>
+  }
+
+  @SuppressWarnings(&quot;unchecked&quot;)
+  @Override
+  protected &lt;T&gt; void complete(SettableFuture future, T value) {
+<span class="fc" id="L41">    future.set(value);</span>
+<span class="fc" id="L42">  }</span>
+
+  @Override
+  protected void completeExceptionally(SettableFuture future, Throwable exception) {
+<span class="fc" id="L46">    future.setException(exception);</span>
+<span class="fc" id="L47">  }</span>
+
+  @Override
+  protected void cancel(SettableFuture future) {
+<span class="nc" id="L51">    future.cancel(true);</span>
+<span class="nc" id="L52">  }</span>
+
+  @SuppressWarnings(&quot;unchecked&quot;)
+  public &lt;T&gt; ListenableFuture&lt;T&gt; send(Request&lt;T&gt; request) {
+<span class="fc" id="L56">    return send_(request);</span>
+  }
+
+  public final &lt;T, R&gt; ListenableFuture&lt;R&gt; send(Command1&lt;T, R&gt; command, T arg) {
+<span class="fc" id="L60">    return send(command.apply(arg));</span>
+  }
+
+  public final &lt;T1, T2, R&gt; ListenableFuture&lt;R&gt; send(Command2&lt;T1, T2, R&gt; command, T1 arg1, T2 arg2) {
+<span class="fc" id="L64">    return send(command.apply(arg1, arg2));</span>
+  }
+
+  public final &lt;T1, T2, T3, R&gt; ListenableFuture&lt;R&gt; send(Command3&lt;T1, T2, T3, R&gt; command, T1 arg1, T2 arg2, T3 arg3) {
+<span class="fc" id="L68">    return send(command.apply(arg1, arg2, arg3));</span>
+  }
+
+  @SafeVarargs
+  public final &lt;E, R&gt; ListenableFuture&lt;R&gt; send(Command1&lt;E[], R&gt; command, E... arg1) {
+<span class="fc" id="L73">    return send(command.apply(arg1));</span>
+  }
+
+  @SafeVarargs
+  public final &lt;T, E, R&gt; ListenableFuture&lt;R&gt; send(Command2&lt;T, E[], R&gt; command, T arg1, E... arg2) {
+<span class="fc" id="L78">    return send(command.apply(arg1, arg2));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.6.201602180812</span></div></body></html>

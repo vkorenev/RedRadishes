@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ArrayAsMapParser.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">RedRadishes Core</a> &gt; <a href="index.source.html" class="el_package">redradishes.decoder.parser</a> &gt; <span class="el_source">ArrayAsMapParser.java</span></div><h1>ArrayAsMapParser.java</h1><pre class="source lang-java linenums">package redradishes.decoder.parser;
+
+import com.google.common.base.Throwables;
+import redradishes.decoder.MapBuilderFactory;
+
+import java.nio.ByteBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.util.function.Function;
+
+public class ArrayAsMapParser&lt;T, K, V&gt; implements Parser&lt;T&gt; {
+  private final int len;
+  private final MapBuilderFactory&lt;K, V, ? extends T&gt; builderFactory;
+  private final CombiningReplyParser&lt;K, V&gt; kvParser;
+
+  public ArrayAsMapParser(int len, MapBuilderFactory&lt;K, V, ? extends T&gt; builderFactory,
+<span class="fc" id="L16">      CombiningReplyParser&lt;K, V&gt; kvParser) {</span>
+<span class="fc" id="L17">    this.len = len;</span>
+<span class="fc" id="L18">    this.builderFactory = builderFactory;</span>
+<span class="fc" id="L19">    this.kvParser = kvParser;</span>
+<span class="fc" id="L20">  }</span>
+
+  @Override
+  public &lt;U&gt; U parse(ByteBuffer buffer, Function&lt;? super T, U&gt; resultHandler,
+      PartialHandler&lt;? super T, U&gt; partialHandler, CharsetDecoder charsetDecoder) {
+<span class="fc" id="L25">    return doParse(buffer, resultHandler, partialHandler, builderFactory.create(len), len, kvParser, charsetDecoder);</span>
+  }
+
+  private &lt;U&gt; U doParse(ByteBuffer buffer, Function&lt;? super T, U&gt; resultHandler,
+      PartialHandler&lt;? super T, U&gt; partialHandler, MapBuilderFactory.Builder&lt;K, V, ? extends T&gt; builder, int remaining,
+      CombiningReplyParser&lt;? extends K, ? extends V&gt; kvSeqParser, CharsetDecoder charsetDecoder) {
+<span class="fc bfc" id="L31" title="All 2 branches covered.">    while (remaining &gt; 0) {</span>
+<span class="fc" id="L32">      Parser&lt;T&gt; partial = parsePartial(buffer, builder, remaining, kvSeqParser, charsetDecoder);</span>
+<span class="pc bpc" id="L33" title="1 of 2 branches missed.">      if (partial != null) {</span>
+<span class="nc" id="L34">        return partialHandler.partial(partial);</span>
+      } else {
+<span class="fc" id="L36">        remaining--;</span>
+<span class="fc" id="L37">        kvSeqParser = kvParser;</span>
+      }
+<span class="fc" id="L39">    }</span>
+<span class="fc" id="L40">    return resultHandler.apply(builder.build());</span>
+  }
+
+  private Parser&lt;T&gt; parsePartial(ByteBuffer buffer, MapBuilderFactory.Builder&lt;K, V, ? extends T&gt; builder, int remaining,
+      CombiningReplyParser&lt;? extends K, ? extends V&gt; kvSeqParser, CharsetDecoder charsetDecoder) {
+<span class="fc" id="L45">    return kvSeqParser.parseReply(buffer, (key, value) -&gt; {</span>
+<span class="fc" id="L46">      builder.put(key, value);</span>
+<span class="fc" id="L47">      return null;</span>
+<span class="nc" id="L48">    }, partial -&gt; new Parser&lt;T&gt;() {</span>
+      @Override
+      public &lt;U1&gt; U1 parse(ByteBuffer buffer, Function&lt;? super T, U1&gt; resultHandler,
+          PartialHandler&lt;? super T, U1&gt; partialHandler, CharsetDecoder charsetDecoder) {
+<span class="nc" id="L52">        return doParse(buffer, resultHandler, partialHandler, builder, remaining, partial, charsetDecoder);</span>
+      }
+    }, e -&gt; {
+<span class="nc" id="L55">      throw Throwables.propagate(e);</span>
+    }, charsetDecoder);
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.6.201602180812</span></div></body></html>

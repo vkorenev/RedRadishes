@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>CharAppendingParser.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">RedRadishes Core</a> &gt; <a href="index.source.html" class="el_package">redradishes.decoder.parser</a> &gt; <span class="el_source">CharAppendingParser.java</span></div><h1>CharAppendingParser.java</h1><pre class="source lang-java linenums">package redradishes.decoder.parser;
+
+import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+public class CharAppendingParser&lt;A extends Appendable&gt; implements ReplyParser&lt;A&gt; {
+<span class="fc" id="L10">  public static final ReplyParser&lt;? extends CharSequence&gt; CHAR_SEQUENCE_PARSER =</span>
+      new CharAppendingParser&lt;&gt;(StringBuilder::new);
+  private static final int READING = 0;
+  private static final int WAITING_FOR_LF = 1;
+  private final Supplier&lt;A&gt; appendableSupplier;
+  private final Exception exception0;
+  private final int state0;
+
+  CharAppendingParser(Supplier&lt;A&gt; appendableSupplier) {
+<span class="fc" id="L19">    this(appendableSupplier, null, READING);</span>
+<span class="fc" id="L20">  }</span>
+
+<span class="fc" id="L22">  private CharAppendingParser(Supplier&lt;A&gt; appendableSupplier, @Nullable Exception exception0, int state0) {</span>
+<span class="fc" id="L23">    this.appendableSupplier = appendableSupplier;</span>
+<span class="fc" id="L24">    this.exception0 = exception0;</span>
+<span class="fc" id="L25">    this.state0 = state0;</span>
+<span class="fc" id="L26">  }</span>
+
+  @Override
+  public &lt;U&gt; U parseReply(ByteBuffer buffer, Function&lt;? super A, U&gt; resultHandler,
+      PartialReplyHandler&lt;? super A, U&gt; partialReplyHandler, FailureHandler&lt;U&gt; failureHandler,
+      CharsetDecoder charsetDecoder) {
+<span class="fc" id="L32">    A appendable = appendableSupplier.get();</span>
+<span class="fc" id="L33">    int state = state0;</span>
+<span class="fc" id="L34">    Exception exception = exception0;</span>
+<span class="fc bfc" id="L35" title="All 2 branches covered.">    while (buffer.hasRemaining()) {</span>
+<span class="fc" id="L36">      byte b = buffer.get();</span>
+<span class="pc bpc" id="L37" title="1 of 3 branches missed.">      switch (state) {</span>
+        case READING:
+<span class="fc bfc" id="L39" title="All 2 branches covered.">          if (b == '\r') {</span>
+<span class="fc" id="L40">            state = WAITING_FOR_LF;</span>
+          } else {
+            try {
+<span class="fc" id="L43">              appendable.append((char) b);</span>
+<span class="fc" id="L44">            } catch (Exception e) {</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">              if (exception == null) {</span>
+<span class="fc" id="L46">                exception = e;</span>
+              }
+<span class="fc" id="L48">            }</span>
+          }
+<span class="fc" id="L50">          break;</span>
+        case WAITING_FOR_LF:
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">          if (b == '\n') {</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">            return exception == null ? resultHandler.apply(appendable) : failureHandler.failure(exception);</span>
+          } else {
+<span class="nc" id="L55">            throw new IllegalStateException(&quot;LF is expected&quot;);</span>
+          }
+      }
+<span class="fc" id="L58">    }</span>
+<span class="fc" id="L59">    return partialReplyHandler.partialReply(new CharAppendingParser&lt;&gt;(() -&gt; appendable, exception, state));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.6.201602180812</span></div></body></html>
