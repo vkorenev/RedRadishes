@@ -247,29 +247,9 @@
   </reporting>
   <profiles>
     <profile>
-      <id>release</id>
+      <id>release-profile</id>
       <build>
         <plugins>
-          <plugin>
-            <artifactId>maven-source-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>jar-no-fork</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
           <plugin>
             <artifactId>maven-gpg-plugin</artifactId>
             <executions>
