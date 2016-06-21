@@ -259,7 +259,7 @@ public class RepliesTest {
   }
 
   @Theory
-  public void parsesArrayReply(@ForAll(sampleSize = 50) byte[][] arrays,
+  public void parsesArrayReply(@ForAll(sampleSize = 40) byte[][] arrays,
       @TestedOn(ints = {1, 3, 5, 10, 100, 1000}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArray(arrays));
     assertThat(parseReply(src, bufferSize, arrayReply(array(byte[][]::new), new TestBulkStringBuilderFactory()),
