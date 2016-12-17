@@ -1,7 +1,6 @@
 package redradishes;
 
-import org.xnio.Pool;
-import org.xnio.Pooled;
+import org.xnio.ByteBufferPool;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,11 +10,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 class ByteBufferBundle {
-  private final Pool<ByteBuffer> pool;
-  private final Deque<Pooled<ByteBuffer>> allocated = new LinkedList<>();
+  private final ByteBufferPool pool;
+  private final Deque<ByteBuffer> allocated = new LinkedList<>();
   private ByteBuffer currentWriteBuffer = null;
 
-  ByteBufferBundle(Pool<ByteBuffer> pool) {
+  ByteBufferBundle(ByteBufferPool pool) {
     this.pool = pool;
   }
 
@@ -40,9 +39,9 @@ class ByteBufferBundle {
   }
 
   private ByteBuffer allocateBuffer() {
-    Pooled<ByteBuffer> pooledBuffer = pool.allocate();
+    ByteBuffer pooledBuffer = pool.allocate();
     allocated.add(pooledBuffer);
-    return pooledBuffer.getResource();
+    return pooledBuffer;
   }
 
   long writeTo(GatheringByteChannel channel) throws IOException {
@@ -62,25 +61,23 @@ class ByteBufferBundle {
   }
 
   private ByteBuffer[] getReadBuffers() {
-    return allocated.stream().map(Pooled::getResource).toArray(ByteBuffer[]::new);
+    return allocated.toArray(new ByteBuffer[allocated.size()]);
   }
 
   private void startWriting() {
-    Iterator<Pooled<ByteBuffer>> iterator = allocated.iterator();
+    Iterator<ByteBuffer> iterator = allocated.iterator();
     while (iterator.hasNext()) {
-      Pooled<ByteBuffer> pooledBuffer = iterator.next();
-      ByteBuffer byteBuffer = pooledBuffer.getResource();
+      ByteBuffer byteBuffer = iterator.next();
       if (!byteBuffer.hasRemaining()) {
         byteBuffer.clear();
-        pooledBuffer.free();
+        ByteBufferPool.free(byteBuffer);
         iterator.remove();
       } else {
         break;
       }
     }
-    Pooled<ByteBuffer> lastPooledBuffer = allocated.peekLast();
-    if (lastPooledBuffer != null) {
-      ByteBuffer lastBuffer = lastPooledBuffer.getResource();
+    ByteBuffer lastBuffer = allocated.peekLast();
+    if (lastBuffer != null) {
       if (lastBuffer.limit() < lastBuffer.capacity()) {
         currentWriteBuffer = lastBuffer.compact();
       }
