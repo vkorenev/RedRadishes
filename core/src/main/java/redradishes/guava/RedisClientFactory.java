@@ -1,21 +1,17 @@
 package redradishes.guava;
 
-import org.xnio.BufferAllocator;
-import org.xnio.ByteBufferSlicePool;
+import org.xnio.ByteBufferPool;
 import org.xnio.OptionMap;
 import org.xnio.Options;
-import org.xnio.Pool;
 import org.xnio.Xnio;
 import org.xnio.XnioWorker;
 
 import java.io.IOException;
 import java.net.SocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 public class RedisClientFactory implements AutoCloseable {
-  private final Pool<ByteBuffer> byteBufferPool =
-      new ByteBufferSlicePool(BufferAllocator.DIRECT_BYTE_BUFFER_ALLOCATOR, 4096, 4096 * 256);
+  private final ByteBufferPool byteBufferPool = ByteBufferPool.MEDIUM_DIRECT;
   private final Charset charset;
   private final XnioWorker worker;
 

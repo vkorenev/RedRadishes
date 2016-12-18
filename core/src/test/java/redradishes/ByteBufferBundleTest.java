@@ -7,8 +7,7 @@ import org.junit.contrib.theories.Theory;
 import org.junit.contrib.theories.suppliers.TestedOn;
 import org.junit.runner.RunWith;
 import org.xnio.Buffers;
-import org.xnio.ByteBufferSlicePool;
-import org.xnio.Pool;
+import org.xnio.ByteBufferPool;
 
 import java.io.IOException;
 import java.nio.Buffer;
@@ -23,7 +22,6 @@ import static java.lang.Integer.min;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertTrue;
-import static org.xnio.BufferAllocator.DIRECT_BYTE_BUFFER_ALLOCATOR;
 
 @RunWith(Theories.class)
 public class ByteBufferBundleTest {
@@ -32,7 +30,7 @@ public class ByteBufferBundleTest {
       @TestedOn(ints = {7, 10, 13}) int readChunk) throws IOException {
     List<byte[]> receivedMessages = new ArrayList<>();
 
-    Pool<ByteBuffer> byteBufferPool = new ByteBufferSlicePool(DIRECT_BYTE_BUFFER_ALLOCATOR, 10, 1000);
+    ByteBufferPool byteBufferPool = ByteBufferPool.SMALL_DIRECT;
     ByteBufferBundle byteBufferBundle = new ByteBufferBundle(byteBufferPool);
     for (byte[] message : messages) {
       write(message, byteBufferBundle, writeChunk);

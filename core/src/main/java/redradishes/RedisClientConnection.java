@@ -1,9 +1,8 @@
 package redradishes;
 
 import com.google.common.base.Throwables;
+import org.xnio.ByteBufferPool;
 import org.xnio.IoUtils;
-import org.xnio.Pool;
-import org.xnio.Pooled;
 import org.xnio.StreamConnection;
 import org.xnio.channels.StreamSinkChannel;
 import org.xnio.channels.StreamSourceChannel;
@@ -24,14 +23,14 @@ class RedisClientConnection {
   private final StreamSinkChannel sinkChannel;
   private ReplyDecoder currentDecoder;
 
-  RedisClientConnection(StreamConnection connection, Pool<ByteBuffer> bufferPool, Charset charset,
+  RedisClientConnection(StreamConnection connection, ByteBufferPool bufferPool, Charset charset,
       BlockingQueue<CommandEncoderDecoder> commandsQueue) {
     CharsetDecoder charsetDecoder = charset.newDecoder();
     StreamSourceChannel sourceChannel = connection.getSourceChannel();
     this.sinkChannel = connection.getSinkChannel();
     sourceChannel.getReadSetter().set(inChannel -> {
-      try (Pooled<ByteBuffer> pooledByteBuffer = bufferPool.allocate()) {
-        ByteBuffer readBuffer = pooledByteBuffer.getResource();
+      ByteBuffer readBuffer = bufferPool.allocate();
+      try {
         while (inChannel.read(readBuffer) > 0) {
           readBuffer.flip();
           try {
@@ -48,6 +47,8 @@ class RedisClientConnection {
         IoUtils.safeClose(sinkChannel);
         IoUtils.safeClose(inChannel);
         failUnfinished(e);
+      } finally {
+        ByteBufferPool.free(readBuffer);
       }
     });
     sourceChannel.getCloseSetter().set(inChannel -> {

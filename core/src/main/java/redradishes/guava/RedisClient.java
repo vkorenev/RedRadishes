@@ -3,7 +3,7 @@ package redradishes.guava;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import org.xnio.Pool;
+import org.xnio.ByteBufferPool;
 import org.xnio.XnioWorker;
 import redradishes.Request;
 import redradishes.XnioRedisClient;
@@ -12,11 +12,10 @@ import redradishes.commands.Command2;
 import redradishes.commands.Command3;
 
 import java.net.SocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 public class RedisClient extends XnioRedisClient<ListenableFuture, SettableFuture> {
-  RedisClient(XnioWorker worker, SocketAddress address, Pool<ByteBuffer> bufferPool, Charset charset) {
+  RedisClient(XnioWorker worker, SocketAddress address, ByteBufferPool bufferPool, Charset charset) {
     super(worker, address, bufferPool, charset);
   }
 
