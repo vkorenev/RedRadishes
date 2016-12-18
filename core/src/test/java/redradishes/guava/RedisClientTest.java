@@ -134,6 +134,8 @@ public class RedisClientTest {
   private static final Command2<CharSequence, CharSequence, Integer> ZRANK =
       command("ZRANK").withArg(strArg(UTF_8)).withArg(strArg(UTF_8)).returning(integerReply());
 
+  private boolean checkWorking = true;
+
   @Before
   public void openConnection() throws Exception {
     factory = new RedisClientFactory(UTF_8, 1);
@@ -143,9 +145,11 @@ public class RedisClientTest {
 
   @After
   public void closeConnection() throws Exception {
-    // Check that connection still works
-    String message = "12345";
-    assertThat(redisClient.send(ECHO, message).get(), hasSameContentAs(message));
+    if (checkWorking) {
+      // Check that connection still works
+      String message = "12345";
+      assertThat(redisClient.send(ECHO, message).get(), hasSameContentAs(message));
+    }
 
     redisClient.close();
     factory.close();
@@ -189,6 +193,8 @@ public class RedisClientTest {
 
   @Test
   public void serverClosesConnection() throws Exception {
+    checkWorking = false;
+
     ListenableFuture<CharSequence> pingResp = redisClient.send(PING);
     ListenableFuture<CharSequence> quitResp = redisClient.send(QUIT);
     assertThat(pingResp.get(), hasSameContentAs("PONG"));
