@@ -1,9 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RedisClientConnection.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">RedRadishes Core</a> &gt; <a href="index.source.html" class="el_package">redradishes</a> &gt; <span class="el_source">RedisClientConnection.java</span></div><h1>RedisClientConnection.java</h1><pre class="source lang-java linenums">package redradishes;
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RedisClientConnection.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">RedRadishes Core</a> &gt; <a href="index.source.html" class="el_package">redradishes</a> &gt; <span class="el_source">RedisClientConnection.java</span></div><h1>RedisClientConnection.java</h1><pre class="source lang-java linenums">package redradishes;
 
 import com.google.common.base.Throwables;
+import org.xnio.ByteBufferPool;
 import org.xnio.IoUtils;
-import org.xnio.Pool;
-import org.xnio.Pooled;
 import org.xnio.StreamConnection;
 import org.xnio.channels.StreamSinkChannel;
 import org.xnio.channels.StreamSourceChannel;
@@ -20,112 +19,114 @@ import java.util.concurrent.LinkedBlockingQueue;
 import static org.xnio.channels.Channels.resumeWritesAsync;
 
 class RedisClientConnection {
-<span class="fc" id="L23">  private final BlockingQueue&lt;ReplyDecoder&gt; decoderQueue = new LinkedBlockingQueue&lt;&gt;();</span>
+<span class="fc" id="L22">  private final BlockingQueue&lt;ReplyDecoder&gt; decoderQueue = new LinkedBlockingQueue&lt;&gt;();</span>
   private final StreamSinkChannel sinkChannel;
   private ReplyDecoder currentDecoder;
 
-  RedisClientConnection(StreamConnection connection, Pool&lt;ByteBuffer&gt; bufferPool, Charset charset,
-<span class="fc" id="L28">      BlockingQueue&lt;CommandEncoderDecoder&gt; commandsQueue) {</span>
-<span class="fc" id="L29">    CharsetDecoder charsetDecoder = charset.newDecoder();</span>
-<span class="fc" id="L30">    StreamSourceChannel sourceChannel = connection.getSourceChannel();</span>
-<span class="fc" id="L31">    this.sinkChannel = connection.getSinkChannel();</span>
-<span class="fc" id="L32">    sourceChannel.getReadSetter().set(inChannel -&gt; {</span>
-<span class="pc" id="L33">      try (Pooled&lt;ByteBuffer&gt; pooledByteBuffer = bufferPool.allocate()) {</span>
-<span class="fc" id="L34">        ByteBuffer readBuffer = pooledByteBuffer.getResource();</span>
-<span class="fc bfc" id="L35" title="All 2 branches covered.">        while (inChannel.read(readBuffer) &gt; 0) {</span>
-<span class="fc" id="L36">          readBuffer.flip();</span>
+  RedisClientConnection(StreamConnection connection, ByteBufferPool bufferPool, Charset charset,
+<span class="fc" id="L27">      BlockingQueue&lt;CommandEncoderDecoder&gt; commandsQueue) {</span>
+<span class="fc" id="L28">    CharsetDecoder charsetDecoder = charset.newDecoder();</span>
+<span class="fc" id="L29">    StreamSourceChannel sourceChannel = connection.getSourceChannel();</span>
+<span class="fc" id="L30">    this.sinkChannel = connection.getSinkChannel();</span>
+<span class="fc" id="L31">    sourceChannel.getReadSetter().set(inChannel -&gt; {</span>
+<span class="fc" id="L32">      ByteBuffer readBuffer = bufferPool.allocate();</span>
+      try {
+<span class="fc bfc" id="L34" title="All 2 branches covered.">        while (inChannel.read(readBuffer) &gt; 0) {</span>
+<span class="fc" id="L35">          readBuffer.flip();</span>
           try {
-<span class="fc bfc" id="L38" title="All 2 branches covered.">            while (readBuffer.hasRemaining()) {</span>
-<span class="pc bpc" id="L39" title="1 of 2 branches missed.">              if (decoder().parse(readBuffer, charsetDecoder)) {</span>
-<span class="fc" id="L40">                currentDecoder = null;</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">            while (readBuffer.hasRemaining()) {</span>
+<span class="pc bpc" id="L38" title="1 of 2 branches missed.">              if (decoder().parse(readBuffer, charsetDecoder)) {</span>
+<span class="fc" id="L39">                currentDecoder = null;</span>
               }
             }
           } finally {
-<span class="pc" id="L44">            readBuffer.clear();</span>
-<span class="fc" id="L45">          }</span>
+<span class="fc" id="L43">            readBuffer.clear();</span>
+<span class="fc" id="L44">          }</span>
         }
-<span class="pc bpc" id="L47" title="6 of 8 branches missed.">      } catch (Throwable e) {</span>
-<span class="nc" id="L48">        IoUtils.safeClose(sinkChannel);</span>
-<span class="nc" id="L49">        IoUtils.safeClose(inChannel);</span>
-<span class="nc" id="L50">        failUnfinished(e);</span>
-<span class="fc" id="L51">      }</span>
-<span class="fc" id="L52">    });</span>
-<span class="fc" id="L53">    sourceChannel.getCloseSetter().set(inChannel -&gt; {</span>
-<span class="fc" id="L54">      IoUtils.safeClose(sinkChannel);</span>
-<span class="fc" id="L55">      failUnfinished(new IOException(&quot;Server closed connection&quot;));</span>
-<span class="fc" id="L56">    });</span>
-<span class="fc" id="L57">    sourceChannel.resumeReads();</span>
-<span class="fc" id="L58">    ByteBufferBundle byteBufferBundle = new ByteBufferBundle(bufferPool);</span>
-<span class="fc" id="L59">    this.sinkChannel.getWriteSetter().set(outChannel -&gt; {</span>
+<span class="nc" id="L46">      } catch (Throwable e) {</span>
+<span class="nc" id="L47">        IoUtils.safeClose(sinkChannel);</span>
+<span class="nc" id="L48">        IoUtils.safeClose(inChannel);</span>
+<span class="nc" id="L49">        failUnfinished(e);</span>
+      } finally {
+<span class="fc" id="L51">        ByteBufferPool.free(readBuffer);</span>
+      }
+<span class="fc" id="L53">    });</span>
+<span class="fc" id="L54">    sourceChannel.getCloseSetter().set(inChannel -&gt; {</span>
+<span class="fc" id="L55">      IoUtils.safeClose(sinkChannel);</span>
+<span class="fc" id="L56">      failUnfinished(new IOException(&quot;Server closed connection&quot;));</span>
+<span class="fc" id="L57">    });</span>
+<span class="fc" id="L58">    sourceChannel.resumeReads();</span>
+<span class="fc" id="L59">    ByteBufferBundle byteBufferBundle = new ByteBufferBundle(bufferPool);</span>
+<span class="fc" id="L60">    this.sinkChannel.getWriteSetter().set(outChannel -&gt; {</span>
       try {
-<span class="pc bpc" id="L61" title="1 of 4 branches missed.">        while (!commandsQueue.isEmpty() || !byteBufferBundle.isEmpty()) {</span>
-<span class="fc" id="L62">          ByteSink sink = new ByteBufferSink(byteBufferBundle);</span>
+<span class="pc bpc" id="L62" title="1 of 4 branches missed.">        while (!commandsQueue.isEmpty() || !byteBufferBundle.isEmpty()) {</span>
+<span class="fc" id="L63">          ByteSink sink = new ByteBufferSink(byteBufferBundle);</span>
           CommandEncoderDecoder command;
-<span class="pc bpc" id="L64" title="1 of 4 branches missed.">          while (byteBufferBundle.allocSize() &lt;= 1 &amp;&amp; (command = commandsQueue.poll()) != null) {</span>
-<span class="fc" id="L65">            decoderQueue.add(command);</span>
-<span class="fc" id="L66">            command.writeTo(sink);</span>
+<span class="pc bpc" id="L65" title="1 of 4 branches missed.">          while (byteBufferBundle.allocSize() &lt;= 1 &amp;&amp; (command = commandsQueue.poll()) != null) {</span>
+<span class="fc" id="L66">            decoderQueue.add(command);</span>
+<span class="fc" id="L67">            command.writeTo(sink);</span>
           }
-<span class="fc" id="L68">          long bytesWritten = byteBufferBundle.writeTo(outChannel);</span>
-<span class="pc bpc" id="L69" title="1 of 2 branches missed.">          if (bytesWritten == 0) {</span>
-<span class="nc" id="L70">            return;</span>
+<span class="fc" id="L69">          long bytesWritten = byteBufferBundle.writeTo(outChannel);</span>
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">          if (bytesWritten == 0) {</span>
+<span class="nc" id="L71">            return;</span>
           }
-<span class="fc" id="L72">        }</span>
-<span class="nc" id="L73">      } catch (Throwable e) {</span>
-<span class="nc" id="L74">        IoUtils.safeClose(sinkChannel);</span>
-<span class="nc" id="L75">        failUnfinished(e);</span>
-<span class="fc" id="L76">      }</span>
-<span class="fc" id="L77">      outChannel.suspendWrites();</span>
-<span class="fc" id="L78">    });</span>
-<span class="fc" id="L79">  }</span>
+<span class="fc" id="L73">        }</span>
+<span class="nc" id="L74">      } catch (Throwable e) {</span>
+<span class="nc" id="L75">        IoUtils.safeClose(sinkChannel);</span>
+<span class="nc" id="L76">        failUnfinished(e);</span>
+<span class="fc" id="L77">      }</span>
+<span class="fc" id="L78">      outChannel.suspendWrites();</span>
+<span class="fc" id="L79">    });</span>
+<span class="fc" id="L80">  }</span>
 
   private void failUnfinished(Throwable e) {
-<span class="pc bpc" id="L82" title="1 of 2 branches missed.">    if (currentDecoder != null) {</span>
-<span class="nc" id="L83">      currentDecoder.fail(e);</span>
-<span class="nc" id="L84">      currentDecoder = null;</span>
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">    if (currentDecoder != null) {</span>
+<span class="nc" id="L84">      currentDecoder.fail(e);</span>
+<span class="nc" id="L85">      currentDecoder = null;</span>
     }
     ReplyDecoder decoder;
-<span class="pc bpc" id="L87" title="1 of 2 branches missed.">    while ((decoder = decoderQueue.poll()) != null) {</span>
-<span class="nc" id="L88">      decoder.fail(e);</span>
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">    while ((decoder = decoderQueue.poll()) != null) {</span>
+<span class="nc" id="L89">      decoder.fail(e);</span>
     }
-<span class="fc" id="L90">  }</span>
+<span class="fc" id="L91">  }</span>
 
   private ReplyDecoder decoder() {
-<span class="pc bpc" id="L93" title="1 of 2 branches missed.">    if (currentDecoder == null) {</span>
-<span class="fc" id="L94">      currentDecoder = decoderQueue.poll();</span>
-<span class="pc bpc" id="L95" title="1 of 2 branches missed.">      if (currentDecoder == null) {</span>
-<span class="nc" id="L96">        currentDecoder = new ReplyDecoder() {</span>
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">    if (currentDecoder == null) {</span>
+<span class="fc" id="L95">      currentDecoder = decoderQueue.poll();</span>
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">      if (currentDecoder == null) {</span>
+<span class="nc" id="L97">        currentDecoder = new ReplyDecoder() {</span>
           @Override
           public boolean parse(ByteBuffer buffer, CharsetDecoder charsetDecoder) throws IOException {
-<span class="nc" id="L99">            int len = buffer.remaining();</span>
-<span class="nc" id="L100">            byte[] bytes = new byte[len];</span>
-<span class="nc" id="L101">            buffer.get(bytes);</span>
-<span class="nc" id="L102">            throw new IllegalStateException(&quot;Unexpected input: &quot; + Arrays.toString(bytes));</span>
+<span class="nc" id="L100">            int len = buffer.remaining();</span>
+<span class="nc" id="L101">            byte[] bytes = new byte[len];</span>
+<span class="nc" id="L102">            buffer.get(bytes);</span>
+<span class="nc" id="L103">            throw new IllegalStateException(&quot;Unexpected input: &quot; + Arrays.toString(bytes));</span>
           }
 
           @Override
           public void fail(Throwable e) {
-<span class="nc" id="L107">            throw Throwables.propagate(e);</span>
+<span class="nc" id="L108">            throw Throwables.propagate(e);</span>
           }
 
           @Override
           public void cancel() {
-<span class="nc" id="L112">          }</span>
+<span class="nc" id="L113">          }</span>
         };
       }
     }
-<span class="fc" id="L116">    return currentDecoder;</span>
+<span class="fc" id="L117">    return currentDecoder;</span>
   }
 
   void commandAdded() {
-<span class="fc" id="L120">    resumeWritesAsync(sinkChannel);</span>
-<span class="fc" id="L121">  }</span>
+<span class="fc" id="L121">    resumeWritesAsync(sinkChannel);</span>
+<span class="fc" id="L122">  }</span>
 
   public void close() {
-<span class="nc bnc" id="L124" title="All 2 branches missed.">    if (currentDecoder != null) {</span>
-<span class="nc" id="L125">      currentDecoder.cancel();</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">    if (currentDecoder != null) {</span>
+<span class="nc" id="L126">      currentDecoder.cancel();</span>
     }
-<span class="nc" id="L127">    decoderQueue.forEach(ReplyDecoder::cancel);</span>
-<span class="nc" id="L128">  }</span>
+<span class="nc" id="L128">    decoderQueue.forEach(ReplyDecoder::cancel);</span>
+<span class="nc" id="L129">  }</span>
 
   interface ReplyDecoder {
     boolean parse(ByteBuffer buffer, CharsetDecoder charsetDecoder) throws IOException;
@@ -139,4 +140,4 @@ class RedisClientConnection {
     void writeTo(ByteSink sink);
   }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.6.201602180812</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span></div></body></html>

@@ -3,9 +3,8 @@ RedRadishes Core,redradishes.guava,CollectionBuilders.new ArrayBuilderFactory.Bu
 RedRadishes Core,redradishes.guava,CollectionBuilders.new MapBuilderFactory.Builder() {...},17,0,0,0,5,0,3,0,3,0
 RedRadishes Core,redradishes.guava,CollectionBuilders,15,0,0,0,3,0,5,0,5,0
 RedRadishes Core,redradishes.guava,RedisClient,10,58,0,0,4,13,3,10,3,10
-RedRadishes Core,redradishes.guava,IoFutureAdapter.new Object() {...},26,0,0,0,1,0,1,0,1,0
 RedRadishes Core,redradishes.guava,IoFutureAdapter,94,0,10,0,19,0,14,0,8,0
-RedRadishes Core,redradishes.guava,RedisClientFactory,0,39,0,0,0,9,0,3,0,3
+RedRadishes Core,redradishes.guava,RedisClientFactory,0,34,0,0,0,9,0,3,0,3
 RedRadishes Core,redradishes.encoder,ConstExpr.new ConstExpr() {...},0,21,0,0,0,5,0,4,0,4
 RedRadishes Core,redradishes.encoder,ConstExpr.new ConstExpr() {...},0,26,0,0,0,5,0,4,0,4
 RedRadishes Core,redradishes.encoder,ConstExpr.new ConstExpr() {...},0,11,0,0,0,5,0,4,0,4
@@ -31,8 +30,8 @@ RedRadishes Core,redradishes.encoder,Encoder.new Encoder() {...},0,35,0,2,0,3,0,
 RedRadishes Core,redradishes.encoder,Encoder.new Encoder() {...},0,27,0,0,0,3,0,3,0,3
 RedRadishes Core,redradishes.encoder,Encoder.new IntEncoder() {...},0,24,0,0,0,3,0,3,0,3
 RedRadishes Core,redradishes.encoder,Encoder.new Encoder() {...},0,25,0,0,0,3,0,3,0,3
-RedRadishes Core,redradishes.encoder,Encoder.new Encoder2() {...},0,27,0,0,0,3,0,3,0,3
 RedRadishes Core,redradishes.encoder,Encoder,0,55,0,0,0,10,0,11,0,11
+RedRadishes Core,redradishes.encoder,Encoder.new Encoder2() {...},0,27,0,0,0,3,0,3,0,3
 RedRadishes Core,redradishes.encoder,Encoders,3,99,0,0,1,11,1,17,1,17
 RedRadishes Core,redradishes.encoder,RespEncoders.new ThreadLocal() {...},0,7,0,0,0,2,0,2,0,2
 RedRadishes Core,redradishes.encoder,RespEncoders,13,504,3,55,4,77,4,56,1,30
@@ -52,20 +51,20 @@ RedRadishes Core,redradishes.decoder,SimpleBulkStringBuilderFactory,0,9,0,0,0,2,
 RedRadishes Core,redradishes.decoder,MapBuilders.new MapBuilderFactory.Builder() {...},0,16,0,0,0,4,0,3,0,3
 RedRadishes Core,redradishes.decoder,MapBuilders,3,13,0,0,1,3,1,2,1,2
 RedRadishes Core,redradishes.decoder,ReplyParseException,0,4,0,0,0,2,0,1,0,1
-RedRadishes Core,redradishes.java8,RedisClientFactory,0,39,0,0,0,9,0,3,0,3
+RedRadishes Core,redradishes.java8,RedisClientFactory,0,34,0,0,0,9,0,3,0,3
 RedRadishes Core,redradishes.java8,RedisClient,27,60,0,0,8,13,3,10,3,10
 RedRadishes Core,redradishes,RedisClientConnection.new RedisClientConnection.ReplyDecoder() {...},33,0,0,0,7,0,4,0,4,0
 RedRadishes Core,redradishes,Request,0,21,0,0,0,3,0,5,0,5
-RedRadishes Core,redradishes,XnioRedisClient.new IoFuture.HandlingNotifier() {...},0,80,0,4,0,12,0,6,0,4
+RedRadishes Core,redradishes,XnioRedisClient.new IoFuture.HandlingNotifier() {...},11,69,1,3,1,11,1,5,0,4
 RedRadishes Core,redradishes,XnioRedisClient.new RedisClientConnection.CommandEncoderDecoder() {...},12,63,0,0,4,11,2,6,2,6
 RedRadishes Core,redradishes,CommandList.1.new ReplyParser() {...},20,0,0,0,2,0,2,0,2,0
 RedRadishes Core,redradishes,UncheckedCharacterCodingException,4,0,0,0,2,0,1,0,1,0
-RedRadishes Core,redradishes,XnioRedisClient,8,91,2,8,2,23,2,8,0,5
+RedRadishes Core,redradishes,XnioRedisClient,10,89,3,7,3,22,3,7,0,5
 RedRadishes Core,redradishes,RedisException,0,4,0,0,0,2,0,1,0,1
 RedRadishes Core,redradishes,ScanResult,0,9,0,0,0,4,0,1,0,1
 RedRadishes Core,redradishes,CommandList.new ReplyParser() {...},8,72,0,2,1,9,1,5,1,4
-RedRadishes Core,redradishes,RedisClientConnection,81,171,16,18,15,46,14,11,1,7
-RedRadishes Core,redradishes,ByteBufferBundle,9,147,2,14,1,42,2,17,0,11
+RedRadishes Core,redradishes,RedisClientConnection,45,158,10,16,16,44,10,11,1,7
+RedRadishes Core,redradishes,ByteBufferBundle,4,134,2,14,1,40,2,16,0,10
 RedRadishes Core,redradishes,ByteBufferSink,76,44,10,2,21,14,7,4,1,4
 RedRadishes Core,redradishes,CommandList,0,27,0,2,0,8,0,4,0,3
 RedRadishes Core,redradishes,Request.new Request() {...},0,31,0,0,0,5,0,3,0,3
@@ -95,7 +94,7 @@ RedRadishes Core,redradishes.decoder.parser,UnexpectedReplyTypeParsers.new Appen
 RedRadishes Core,redradishes.decoder.parser,BulkStringParser.new ReplyParser() {...},0,40,0,0,0,2,0,2,0,2
 RedRadishes Core,redradishes.decoder.parser,ArrayParser,0,124,0,6,0,25,0,10,0,7
 RedRadishes Core,redradishes.decoder.parser,CombiningReplyParser,0,15,0,0,0,3,0,2,0,2
-RedRadishes Core,redradishes.decoder.parser,BulkStringParser,17,165,3,17,1,46,3,11,0,3
+RedRadishes Core,redradishes.decoder.parser,BulkStringParser,10,159,3,17,1,45,3,11,0,3
 RedRadishes Core,redradishes.decoder.parser,CombiningReplyParser.new CombiningReplyParser() {...},0,130,0,0,0,11,0,13,0,13
 RedRadishes Core,redradishes.decoder.parser,Parser.new Parser() {...},35,0,0,0,3,0,4,0,4,0
 RedRadishes Core,redradishes.decoder.parser,CombiningReplyParser.new ReplyParser() {...},0,37,0,0,0,4,0,4,0,4
