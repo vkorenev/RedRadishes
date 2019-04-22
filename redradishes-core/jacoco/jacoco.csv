@@ -55,7 +55,7 @@ RedRadishes Core,redradishes.java8,RedisClientFactory,0,34,0,0,0,9,0,3,0,3
 RedRadishes Core,redradishes.java8,RedisClient,27,60,0,0,8,13,3,10,3,10
 RedRadishes Core,redradishes,RedisClientConnection.new RedisClientConnection.ReplyDecoder() {...},33,0,0,0,7,0,4,0,4,0
 RedRadishes Core,redradishes,Request,0,21,0,0,0,3,0,5,0,5
-RedRadishes Core,redradishes,XnioRedisClient.new IoFuture.HandlingNotifier() {...},11,69,1,3,1,11,1,5,0,4
+RedRadishes Core,redradishes,XnioRedisClient.new IoFuture.HandlingNotifier() {...},11,69,2,2,1,11,2,4,0,4
 RedRadishes Core,redradishes,XnioRedisClient.new RedisClientConnection.CommandEncoderDecoder() {...},12,63,0,0,4,11,2,6,2,6
 RedRadishes Core,redradishes,CommandList.1.new ReplyParser() {...},20,0,0,0,2,0,2,0,2,0
 RedRadishes Core,redradishes,UncheckedCharacterCodingException,4,0,0,0,2,0,1,0,1,0

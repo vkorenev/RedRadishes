@@ -42,7 +42,7 @@ public abstract class XnioRedisClient&lt;F, SF extends F&gt; implements AutoClos
       @Override
       public void handleDone(StreamConnection connection, Void v) {
 <span class="fc" id="L44">        redisClientConnection = new RedisClientConnection(connection, bufferPool, charset, writerQueue);</span>
-<span class="fc bfc" id="L45" title="All 2 branches covered.">        if (!writerQueue.isEmpty()) {</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">        if (!writerQueue.isEmpty()) {</span>
 <span class="fc" id="L46">          redisClientConnection.commandAdded();</span>
         }
 <span class="fc" id="L48">        connection.setCloseListener(streamConnection -&gt; {</span>
