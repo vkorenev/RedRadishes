@@ -176,6 +176,18 @@ public class RedisClientTest {
   }
 
   @Test
+  public void canSendAndGetBigData() {
+    int capacity = 1024 * 1014 * 40;
+    StringBuilder sb = new StringBuilder(capacity);
+    for (int i = 0; i < capacity;i++){
+      sb.append(Character.toChars(i%127));
+    }
+    redisClient.send(SET, "key", sb.toString()).join();
+    CompletableFuture<byte[]> key = redisClient.send(GET, "key");
+    assertArrayEquals(key.join(), sb.toString().getBytes());
+  }
+
+  @Test
   public void returnsError() throws Exception {
     String key = "KEY_1";
     assertThat(redisClient.send(HSET, key, "FIELD", "VAL").join(), equalTo(1));
