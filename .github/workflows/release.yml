@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to Maven Central
+    runs-on: ubuntu-latest
+    environment: maven-central
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Set up Java and Maven Central credentials
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 8
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Verify release version
+        shell: bash
+        run: |
+          version="$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)"
+          tag_version="${GITHUB_REF_NAME#v}"
+          if [[ "$version" == *-SNAPSHOT ]]; then
+            echo "Refusing to publish SNAPSHOT version $version"
+            exit 1
+          fi
+          if [[ "$tag_version" != "$version" ]]; then
+            echo "Tag $GITHUB_REF_NAME does not match Maven version $version"
+            exit 1
+          fi
+
+      - name: Publish to Maven Central
+        run: mvn --batch-mode --no-transfer-progress -Prelease-profile deploy
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
