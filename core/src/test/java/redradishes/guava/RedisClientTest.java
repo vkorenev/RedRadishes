@@ -4,7 +4,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.testcontainers.containers.GenericContainer;
 import redradishes.CommandList;
 import redradishes.RedisException;
 import redradishes.Request;
@@ -64,6 +66,12 @@ import static redradishes.encoder.Encoders.strArg;
 import static redradishes.hamcrest.HasSameContentAs.hasSameContentAs;
 
 public class RedisClientTest {
+  private static final int REDIS_PORT = 6379;
+
+  @ClassRule
+  public static final GenericContainer<?> REDIS =
+      new GenericContainer<>("redis:7-alpine").withExposedPorts(REDIS_PORT);
+
   private RedisClientFactory factory;
   private RedisClient redisClient;
   private static final Command1<CharSequence[], Integer> DEL =
@@ -139,7 +147,7 @@ public class RedisClientTest {
   @Before
   public void openConnection() throws Exception {
     factory = new RedisClientFactory(UTF_8, 1);
-    redisClient = factory.connect(new InetSocketAddress("localhost", 6379));
+    redisClient = factory.connect(new InetSocketAddress(REDIS.getHost(), REDIS.getMappedPort(REDIS_PORT)));
     redisClient.send(FLUSHDB).get();
   }
 
