@@ -1,9 +1,8 @@
 package redradishes.encoder;
 
 import com.google.common.primitives.Bytes;
-import com.pholser.junit.quickcheck.ForAll;
-import org.junit.contrib.theories.Theories;
-import org.junit.contrib.theories.Theory;
+import com.pholser.junit.quickcheck.Property;
+import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
@@ -17,10 +16,10 @@ import static redradishes.encoder.Encoders.collArg;
 import static redradishes.encoder.Encoders.intArg;
 import static redradishes.encoder.TestUtil.serialize;
 
-@RunWith(Theories.class)
+@RunWith(JUnitQuickcheck.class)
 public class EncodersTest {
-  @Theory
-  public void testLongArrayArg(@ForAll long[] val) throws Exception {
+  @Property
+  public void testLongArrayArg(long[] val) throws Exception {
     ConstExpr writer = Encoders.longArrayArg().encode(val);
     assertEquals(writer.size(), val.length);
     assertThat(serialize(writer), equalTo(Bytes.concat(
@@ -28,8 +27,8 @@ public class EncodersTest {
             .toArray(byte[][]::new))));
   }
 
-  @Theory
-  public void testIntArrayArg(@ForAll int[] val) throws Exception {
+  @Property
+  public void testIntArrayArg(int[] val) throws Exception {
     ConstExpr writer = Encoders.intArrayArg().encode(val);
     assertEquals(writer.size(), val.length);
     assertThat(serialize(writer), equalTo(Bytes.concat(
@@ -37,8 +36,8 @@ public class EncodersTest {
             .toArray(byte[][]::new))));
   }
 
-  @Theory
-  public void testCollArg(@ForAll List<Integer> val) {
+  @Property
+  public void testCollArg(List<Integer> val) {
     ConstExpr c = collArg(intArg()).encode(val);
     assertEquals(val.size(), c.size());
     assertThat(serialize(c), equalTo(Bytes.concat(

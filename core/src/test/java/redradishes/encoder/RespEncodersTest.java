@@ -1,13 +1,11 @@
 package redradishes.encoder;
 
-import com.pholser.junit.quickcheck.ForAll;
+import com.pholser.junit.quickcheck.Property;
 import com.pholser.junit.quickcheck.From;
-import com.pholser.junit.quickcheck.generator.ValuesOf;
+import com.pholser.junit.quickcheck.generator.Only;
 import com.pholser.junit.quickcheck.generator.java.lang.Encoded;
 import com.pholser.junit.quickcheck.generator.java.lang.Encoded.InCharset;
-import org.junit.contrib.theories.DataPoints;
-import org.junit.contrib.theories.Theories;
-import org.junit.contrib.theories.Theory;
+import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
 import org.junit.runner.RunWith;
 
 import java.nio.charset.Charset;
@@ -23,33 +21,31 @@ import static org.junit.Assert.assertThat;
 import static redradishes.encoder.TestUtil.respBulkString;
 import static redradishes.encoder.TestUtil.serialize;
 
-@RunWith(Theories.class)
+@RunWith(JUnitQuickcheck.class)
 public class RespEncodersTest {
-  @DataPoints
   public static final Charset[] CHARSETS = {UTF_8, UTF_16BE, UTF_16LE};
-  @DataPoints
-  public static final int[] INTS =
-      {0, 1, 9, 10, 99, 100, 100, -1, -9, -10, -99, -100, Integer.MAX_VALUE, Integer.MIN_VALUE};
-  @DataPoints
-  public static final long[] LONGS =
-      {0, 1, 9, 10, 99, 100, 100, -1, -9, -10, -99, -100, Long.MAX_VALUE, Long.MIN_VALUE};
 
-  @Theory
-  public void testArray(@ForAll int i, @ForAll @ValuesOf boolean compact) {
+  @Property
+  public void testArray(int i, boolean compact) {
     ConstExpr expr = RespEncoders.array().encode(i);
     ConstExpr c = compact ? expr.compact() : expr;
     assertEquals(0, c.size());
     assertThat(serialize(c), equalTo(String.format("*%d\r\n", i).getBytes(US_ASCII)));
   }
 
-  @Theory
-  public void testOneByteCharsetStrBulkString(@ForAll @From(Encoded.class) @InCharset("ISO-8859-1") String s,
-      @ForAll @ValuesOf boolean compact) {
-    testStrBulkString(s, ISO_8859_1, compact);
+  @Property
+  public void testOneByteCharsetStrBulkString(@From(Encoded.class) @InCharset("ISO-8859-1") String s,
+      boolean compact) {
+    assertStrBulkString(s, ISO_8859_1, compact);
   }
 
-  @Theory
-  public void testStrBulkString(@ForAll String s, Charset charset, @ForAll @ValuesOf boolean compact) {
+  @Property
+  public void testStrBulkString(String s, @Only({"0", "1", "2"}) int charsetIndex, boolean compact) {
+    Charset charset = CHARSETS[charsetIndex];
+    assertStrBulkString(s, charset, compact);
+  }
+
+  private void assertStrBulkString(String s, Charset charset, boolean compact) {
     ConstExpr expr = RespEncoders.strBulkString(charset).encode(s);
     ConstExpr c = compact ? expr.compact() : expr;
     assertEquals(1, c.size());
@@ -57,16 +53,19 @@ public class RespEncodersTest {
     assertThat(serialize(c), equalTo(respBulkString(bytes)));
   }
 
-  @Theory
-  public void testBytesBulkString(@ForAll byte[] bytes, @ForAll @ValuesOf boolean compact) {
+  @Property
+  public void testBytesBulkString(byte[] bytes, boolean compact) {
     ConstExpr expr = RespEncoders.bytesBulkString().encode(bytes);
     ConstExpr c = compact ? expr.compact() : expr;
     assertEquals(1, c.size());
     assertThat(serialize(c), equalTo(respBulkString(bytes)));
   }
 
-  @Theory
-  public void testIntBulkString(int i, @ForAll @ValuesOf boolean compact) {
+  @Property
+  public void testIntBulkString(
+      @Only({"0", "1", "9", "10", "99", "100", "-1", "-9", "-10", "-99", "-100", "2147483647",
+          "-2147483648"}) int i,
+      boolean compact) {
     ConstExpr expr = RespEncoders.intBulkString().encode(i);
     ConstExpr c = compact ? expr.compact() : expr;
     assertEquals(1, c.size());
@@ -74,8 +73,11 @@ public class RespEncodersTest {
     assertThat(serialize(c), equalTo(String.format("$%d\r\n%s\r\n", s.length(), s).getBytes(US_ASCII)));
   }
 
-  @Theory
-  public void testLongBulkString(long i, @ForAll @ValuesOf boolean compact) {
+  @Property
+  public void testLongBulkString(
+      @Only({"0", "1", "9", "10", "99", "100", "-1", "-9", "-10", "-99", "-100",
+          "9223372036854775807", "-9223372036854775808"}) long i,
+      boolean compact) {
     ConstExpr expr = RespEncoders.longBulkString().encode(i);
     ConstExpr c = compact ? expr.compact() : expr;
     assertEquals(1, c.size());
@@ -83,8 +85,8 @@ public class RespEncodersTest {
     assertThat(serialize(c), equalTo(String.format("$%d\r\n%s\r\n", s.length(), s).getBytes(US_ASCII)));
   }
 
-  @Theory
-  public void testToBytes(@ForAll long i) throws Exception {
+  @Property
+  public void testToBytes(long i) throws Exception {
     assertThat(RespEncoders.toBytes(i), equalTo(Long.toString(i).getBytes(US_ASCII)));
   }
 }

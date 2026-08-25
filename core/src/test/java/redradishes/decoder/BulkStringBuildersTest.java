@@ -1,14 +1,12 @@
 package redradishes.decoder;
 
-import com.pholser.junit.quickcheck.ForAll;
+import com.pholser.junit.quickcheck.Property;
 import com.pholser.junit.quickcheck.From;
 import com.pholser.junit.quickcheck.generator.InRange;
 import com.pholser.junit.quickcheck.generator.java.lang.Encoded;
 import org.junit.Rule;
-import org.junit.contrib.theories.DataPoints;
-import org.junit.contrib.theories.Theories;
-import org.junit.contrib.theories.Theory;
-import org.junit.contrib.theories.suppliers.TestedOn;
+import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
+import com.pholser.junit.quickcheck.generator.Only;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
@@ -39,25 +37,29 @@ import static redradishes.decoder.parser.TestUtil.encodeBulkString;
 import static redradishes.decoder.parser.TestUtil.parseReply;
 import static redradishes.hamcrest.HasSameContentAs.hasSameContentAs;
 
-@RunWith(Theories.class)
+@RunWith(JUnitQuickcheck.class)
 public class BulkStringBuildersTest {
   @Rule
   public final MockitoRule mockitoRule = MockitoJUnit.rule();
   @Mock
   private CharsetDecoder charsetDecoder;
 
-  @DataPoints
   public static final Charset[] CHARSETS = {UTF_8, UTF_16BE, UTF_16LE};
 
-  @Theory
-  public void parsesCharSequences(@ForAll @From(Encoded.class) @Encoded.InCharset("ISO-8859-1") String value,
-      @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
-    parsesCharSequences(value, bufferSize, ISO_8859_1);
+  @Property
+  public void parsesCharSequences(@From(Encoded.class) @Encoded.InCharset("ISO-8859-1") String value,
+      @Only({"1", "2", "3", "5", "10", "100", "1000"}) int bufferSize) {
+    assertParsesCharSequences(value, bufferSize, ISO_8859_1);
   }
 
-  @Theory
-  public void parsesCharSequences(@ForAll String value, @TestedOn(ints = {4, 5, 6, 7, 10, 100, 1000}) int bufferSize,
-      Charset charset) {
+  @Property
+  public void parsesCharSequences(String value, @Only({"4", "5", "6", "7", "10", "100", "1000"}) int bufferSize,
+      @Only({"0", "1", "2"}) int charsetIndex) {
+    Charset charset = CHARSETS[charsetIndex];
+    assertParsesCharSequences(value, bufferSize, charset);
+  }
+
+  private void assertParsesCharSequences(String value, int bufferSize, Charset charset) {
     ByteBuffer src = ByteBuffer.wrap(encodeBulkString(value.getBytes(charset)));
     CharSequence actual =
         parseReply(src, bufferSize, bulkStringReply(charSequence()), Function.identity(), assertNoFailure(),
@@ -65,23 +67,28 @@ public class BulkStringBuildersTest {
     assertThat(actual, hasSameContentAs(value));
   }
 
-  @Theory
-  public void parsesStrings(@ForAll @From(Encoded.class) @Encoded.InCharset("ISO-8859-1") String value,
-      @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
-    parsesStrings(value, bufferSize, ISO_8859_1);
+  @Property
+  public void parsesStrings(@From(Encoded.class) @Encoded.InCharset("ISO-8859-1") String value,
+      @Only({"1", "2", "3", "5", "10", "100", "1000"}) int bufferSize) {
+    assertParsesStrings(value, bufferSize, ISO_8859_1);
   }
 
-  @Theory
-  public void parsesStrings(@ForAll String value, @TestedOn(ints = {4, 5, 6, 7, 10, 100, 1000}) int bufferSize,
-      Charset charset) {
+  @Property
+  public void parsesStrings(String value, @Only({"4", "5", "6", "7", "10", "100", "1000"}) int bufferSize,
+      @Only({"0", "1", "2"}) int charsetIndex) {
+    Charset charset = CHARSETS[charsetIndex];
+    assertParsesStrings(value, bufferSize, charset);
+  }
+
+  private void assertParsesStrings(String value, int bufferSize, Charset charset) {
     ByteBuffer src = ByteBuffer.wrap(encodeBulkString(value.getBytes(charset)));
     CharSequence actual = parseReply(src, bufferSize, bulkStringReply(string()), Function.identity(), assertNoFailure(),
         charset.newDecoder());
     assertThat(actual, equalTo(value));
   }
 
-  @Theory
-  public void parsesIntegers(@ForAll int value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
+  @Property
+  public void parsesIntegers(int value, @Only({"1", "2", "3", "5", "10", "100", "1000"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeBulkString(Integer.toString(value).getBytes(US_ASCII)));
     assertThat(
         parseReply(src, bufferSize, bulkStringReply(integer()), Function.identity(), assertNoFailure(), charsetDecoder),
@@ -89,8 +96,8 @@ public class BulkStringBuildersTest {
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public void parsesLongs(@ForAll long value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
+  @Property
+  public void parsesLongs(long value, @Only({"1", "2", "3", "5", "10", "100", "1000"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeBulkString(Long.toString(value).getBytes(US_ASCII)));
     assertThat(
         parseReply(src, bufferSize, bulkStringReply(_long()), Function.identity(), assertNoFailure(), charsetDecoder),
@@ -98,16 +105,16 @@ public class BulkStringBuildersTest {
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public void parsesByteArrays(@ForAll byte[] value, @TestedOn(ints = {1, 2, 3, 5, 10, 100, 1000}) int bufferSize) {
+  @Property
+  public void parsesByteArrays(byte[] value, @Only({"1", "2", "3", "5", "10", "100", "1000"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeBulkString(value));
     assertThat(parseReply(src, bufferSize, bulkStringReply(byteArray()), Function.identity(), assertNoFailure(),
         charsetDecoder), equalTo(value));
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public void allocatesCharBufferOfTheRightSize(@ForAll @InRange(minInt = 0, maxInt = 100_000_000) int length) {
+  @Property
+  public void allocatesCharBufferOfTheRightSize(@InRange(minInt = 0, maxInt = 100_000_000) int length) {
     CharBuffer charBuffer = (CharBuffer) charSequence().create(length, UTF_8.newDecoder());
     assertThat(charBuffer.length(), equalTo(length));
   }

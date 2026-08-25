@@ -1,12 +1,11 @@
 package redradishes.decoder.parser;
 
-import com.pholser.junit.quickcheck.ForAll;
+import com.pholser.junit.quickcheck.Property;
 import com.pholser.junit.quickcheck.From;
 import com.pholser.junit.quickcheck.generator.java.lang.Encoded;
 import org.junit.Rule;
-import org.junit.contrib.theories.Theories;
-import org.junit.contrib.theories.Theory;
-import org.junit.contrib.theories.suppliers.TestedOn;
+import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
+import com.pholser.junit.quickcheck.generator.Only;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
@@ -35,16 +34,16 @@ import static redradishes.decoder.parser.TestUtil.assertNoResult;
 import static redradishes.decoder.parser.TestUtil.parseReply;
 import static redradishes.hamcrest.HasSameContentAs.hasSameContentAs;
 
-@RunWith(Theories.class)
+@RunWith(JUnitQuickcheck.class)
 public class CharAppendingParserTest {
   @Rule
   public final MockitoRule mockitoRule = MockitoJUnit.rule();
   @Mock
   private CharsetDecoder charsetDecoder;
 
-  @Theory
-  public void parsesStrings(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String value,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesStrings(@From(Encoded.class) @Encoded.InCharset("US-ASCII") String value,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     assumeTrue(value.indexOf('\r') == -1 && value.indexOf('\n') == -1);
 
     ByteBuffer src = ByteBuffer.wrap((value + "\r\n").getBytes(US_ASCII));
@@ -54,9 +53,9 @@ public class CharAppendingParserTest {
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public void reportsFailure(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String value,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) throws Exception {
+  @Property
+  public void reportsFailure(@From(Encoded.class) @Encoded.InCharset("US-ASCII") String value,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) throws Exception {
     assumeTrue(value.indexOf('\r') == -1 && value.indexOf('\n') == -1);
     assumeThat(value.length(), greaterThan(0));
 

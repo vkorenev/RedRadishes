@@ -1,10 +1,9 @@
 package redradishes;
 
 import com.google.common.primitives.Bytes;
-import com.pholser.junit.quickcheck.ForAll;
-import org.junit.contrib.theories.Theories;
-import org.junit.contrib.theories.Theory;
-import org.junit.contrib.theories.suppliers.TestedOn;
+import com.pholser.junit.quickcheck.Property;
+import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
+import com.pholser.junit.quickcheck.generator.Only;
 import org.junit.runner.RunWith;
 import org.xnio.Buffers;
 import org.xnio.ByteBufferPool;
@@ -23,11 +22,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertTrue;
 
-@RunWith(Theories.class)
+@RunWith(JUnitQuickcheck.class)
 public class ByteBufferBundleTest {
-  @Theory
-  public void writes(@ForAll byte[][] messages, @TestedOn(ints = {7, 10}) int writeChunk,
-      @TestedOn(ints = {7, 10, 13}) int readChunk) throws IOException {
+  @Property
+  public void writes(byte[][] messages, @Only({"7", "10"}) int writeChunk,
+      @Only({"7", "10", "13"}) int readChunk) throws IOException {
     List<byte[]> receivedMessages = new ArrayList<>();
 
     ByteBufferPool byteBufferPool = ByteBufferPool.SMALL_DIRECT;
