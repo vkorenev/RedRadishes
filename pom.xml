@@ -32,8 +32,8 @@
     <url>https://github.com/vkorenev/RedRadishes/issues</url>
   </issueManagement>
   <ciManagement>
-    <system>Travis CI</system>
-    <url>https://travis-ci.org/vkorenev/RedRadishes</url>
+    <system>GitHub Actions</system>
+    <url>https://github.com/vkorenev/RedRadishes/actions</url>
   </ciManagement>
   <modules>
     <module>core</module>
