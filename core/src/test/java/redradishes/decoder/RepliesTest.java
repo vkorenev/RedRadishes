@@ -1,13 +1,12 @@
 package redradishes.decoder;
 
-import com.pholser.junit.quickcheck.ForAll;
+import com.pholser.junit.quickcheck.Property;
 import com.pholser.junit.quickcheck.From;
 import com.pholser.junit.quickcheck.generator.InRange;
 import com.pholser.junit.quickcheck.generator.java.lang.Encoded;
 import org.junit.Rule;
-import org.junit.contrib.theories.Theories;
-import org.junit.contrib.theories.Theory;
-import org.junit.contrib.theories.suppliers.TestedOn;
+import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
+import com.pholser.junit.quickcheck.generator.Only;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
@@ -54,162 +53,162 @@ import static redradishes.decoder.parser.TestUtil.parseReply;
 import static redradishes.hamcrest.HasSameContentAs.hasSameContentAs;
 import static redradishes.hamcrest.ThrowableMessageMatcher.hasMessage;
 
-@RunWith(Theories.class)
+@RunWith(JUnitQuickcheck.class)
 public class RepliesTest {
   @Rule
   public final MockitoRule mockitoRule = MockitoJUnit.rule();
   @Mock
   private CharsetDecoder charsetDecoder;
 
-  @Theory
-  public void parsesIntegerReply(@ForAll int num, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesIntegerReply(int num, @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeInteger(num));
     assertThat(parseReply(src, bufferSize, integerReply(), Function.identity(), assertNoFailure(), charsetDecoder),
         equalTo(num));
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public void parsesNullIntegerReply(@TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesNullIntegerReply(@Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeNilBulkString());
     assertThat(parseReply(src, bufferSize, integerReply(), Function.identity(), assertNoFailure(), charsetDecoder),
         nullValue());
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public void parsesErrorIntegerReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesErrorIntegerReply(@From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     parsesError(s, bufferSize, integerReply());
   }
 
-  @Theory
+  @Property
   public void failsToParseIntegerReplyIfSimpleStringReplyIsFound(
-      @ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+      @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeSimpleString(s));
     failsToParseReply(src, bufferSize, integerReply(),
         "Command returned simple string reply while integer reply was expected");
   }
 
-  @Theory
-  public void failsToParseIntegerReplyIfBulkStringReplyIsFound(@ForAll byte[] bytes,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void failsToParseIntegerReplyIfBulkStringReplyIsFound(byte[] bytes,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeBulkString(bytes));
     failsToParseReply(src, bufferSize, integerReply(),
         "Command returned bulk string reply while integer reply was expected");
   }
 
-  @Theory
-  public void failsToParseIntegerReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
-      @TestedOn(ints = {3, 5, 10, 100, 1000}) int bufferSize) {
+  @Property(trials = 10)
+  public void failsToParseIntegerReplyIfArrayReplyIsFound(byte[][][] arrays,
+      @Only({"3", "5", "10", "100", "1000"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
     failsToParseReply(src, bufferSize, integerReply(), "Command returned array reply while integer reply was expected");
   }
 
-  @Theory
-  public void parsesLongReply(@ForAll long num, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesLongReply(long num, @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeInteger(num));
     assertThat(parseReply(src, bufferSize, longReply(), Function.identity(), assertNoFailure(), charsetDecoder),
         equalTo(num));
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public void parsesNullLongReply(@TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesNullLongReply(@Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeNilBulkString());
     assertThat(parseReply(src, bufferSize, longReply(), Function.identity(), assertNoFailure(), charsetDecoder),
         nullValue());
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public void parsesErrorLongReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesErrorLongReply(@From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     parsesError(s, bufferSize, longReply());
   }
 
-  @Theory
+  @Property
   public void failsToParseLongReplyIfSimpleStringReplyIsFound(
-      @ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+      @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeSimpleString(s));
     failsToParseReply(src, bufferSize, longReply(),
         "Command returned simple string reply while integer reply was expected");
   }
 
-  @Theory
-  public void failsToParseLongReplyIfBulkStringReplyIsFound(@ForAll byte[] bytes,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void failsToParseLongReplyIfBulkStringReplyIsFound(byte[] bytes,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeBulkString(bytes));
     failsToParseReply(src, bufferSize, longReply(),
         "Command returned bulk string reply while integer reply was expected");
   }
 
-  @Theory
-  public void failsToParseLongReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
-      @TestedOn(ints = {3, 5, 10, 100, 1000}) int bufferSize) {
+  @Property(trials = 10)
+  public void failsToParseLongReplyIfArrayReplyIsFound(byte[][][] arrays,
+      @Only({"3", "5", "10", "100", "1000"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
     failsToParseReply(src, bufferSize, longReply(), "Command returned array reply while integer reply was expected");
   }
 
-  @Theory
-  public void parsesSimpleStringReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesSimpleStringReply(@From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeSimpleString(s));
     assertThat(parseReply(src, bufferSize, simpleStringReply(), Function.identity(), assertNoFailure(), charsetDecoder),
         hasSameContentAs(s));
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public void parsesNullStringReply(@TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesNullStringReply(@Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeNilBulkString());
     assertThat(parseReply(src, bufferSize, simpleStringReply(), Function.identity(), assertNoFailure(), charsetDecoder),
         nullValue());
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public void parsesErrorSimpleStringReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesErrorSimpleStringReply(@From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     parsesError(s, bufferSize, simpleStringReply());
   }
 
-  @Theory
-  public void failsToParseSimpleStringReplyIfIntegerReplyIsFound(@ForAll long num,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void failsToParseSimpleStringReplyIfIntegerReplyIsFound(long num,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeInteger(num));
     failsToParseReply(src, bufferSize, simpleStringReply(),
         "Command returned integer reply while simple string reply was expected");
   }
 
-  @Theory
-  public void failsToParseSimpleStringReplyIfBulkStringReplyIsFound(@ForAll byte[] bytes,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void failsToParseSimpleStringReplyIfBulkStringReplyIsFound(byte[] bytes,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeBulkString(bytes));
     failsToParseReply(src, bufferSize, simpleStringReply(),
         "Command returned bulk string reply while simple string reply was expected");
   }
 
-  @Theory
-  public void failsToParseSimpleStringReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
-      @TestedOn(ints = {3, 5, 10, 100, 1000}) int bufferSize) {
+  @Property(trials = 10)
+  public void failsToParseSimpleStringReplyIfArrayReplyIsFound(byte[][][] arrays,
+      @Only({"3", "5", "10", "100", "1000"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
     failsToParseReply(src, bufferSize, simpleStringReply(),
         "Command returned array reply while simple string reply was expected");
   }
 
-  @Theory
-  public void parsesBulkStringReply(@ForAll byte[] bytes, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesBulkStringReply(byte[] bytes, @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeBulkString(bytes));
     assertThat(parseReply(src, bufferSize, bulkStringReply(new TestBulkStringBuilderFactory()), Function.identity(),
         assertNoFailure(), charsetDecoder), equalTo(bytes));
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public void parsesNullBulkStringReply(@TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesNullBulkStringReply(@Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeNilBulkString());
     BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     assertThat(
@@ -219,17 +218,17 @@ public class RepliesTest {
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
-  @Theory
-  public void parsesErrorBulkStringReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesErrorBulkStringReply(@From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     parsesError(s, bufferSize, bulkStringReply(bulkStringBuilderFactory));
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
-  @Theory
-  public void failsToParseBulkStringReplyIfIntegerReplyIsFound(@ForAll long num,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void failsToParseBulkStringReplyIfIntegerReplyIsFound(long num,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeInteger(num));
     BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     failsToParseReply(src, bufferSize, bulkStringReply(bulkStringBuilderFactory),
@@ -237,10 +236,10 @@ public class RepliesTest {
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
-  @Theory
+  @Property
   public void failsToParseBulkStringReplyIfSimpleStringReplyIsFound(
-      @ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+      @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeSimpleString(s));
     BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     failsToParseReply(src, bufferSize, bulkStringReply(bulkStringBuilderFactory),
@@ -248,9 +247,9 @@ public class RepliesTest {
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
-  @Theory
-  public void failsToParseBulkStringReplyIfArrayReplyIsFound(@ForAll(sampleSize = 10) byte[][][] arrays,
-      @TestedOn(ints = {3, 5, 10, 100, 1000}) int bufferSize) {
+  @Property(trials = 10)
+  public void failsToParseBulkStringReplyIfArrayReplyIsFound(byte[][][] arrays,
+      @Only({"3", "5", "10", "100", "1000"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
     BulkStringBuilderFactory<?, ?> bulkStringBuilderFactory = mock(BulkStringBuilderFactory.class);
     failsToParseReply(src, bufferSize, bulkStringReply(bulkStringBuilderFactory),
@@ -258,17 +257,17 @@ public class RepliesTest {
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
-  @Theory
-  public void parsesArrayReply(@ForAll(sampleSize = 40) byte[][] arrays,
-      @TestedOn(ints = {1, 3, 5, 10, 100, 1000}) int bufferSize) {
+  @Property(trials = 40)
+  public void parsesArrayReply(byte[][] arrays,
+      @Only({"1", "3", "5", "10", "100", "1000"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeArray(arrays));
     assertThat(parseReply(src, bufferSize, arrayReply(array(byte[][]::new), new TestBulkStringBuilderFactory()),
         Function.identity(), assertNoFailure(), charsetDecoder), equalTo(arrays));
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public <E> void parsesNullArrayReply(@TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public <E> void parsesNullArrayReply(@Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeNilArray());
     @SuppressWarnings("unchecked") ArrayBuilderFactory<E, ?> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
     @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
@@ -281,9 +280,9 @@ public class RepliesTest {
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
-  @Theory
-  public <E> void parsesErrorArrayReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public <E> void parsesErrorArrayReply(@From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     @SuppressWarnings("unchecked") ArrayBuilderFactory<E, ?> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
     @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);
@@ -292,9 +291,9 @@ public class RepliesTest {
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
-  @Theory
-  public <E> void failsToParseArrayReplyIfIntegerReplyIsFound(@ForAll long num,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public <E> void failsToParseArrayReplyIfIntegerReplyIsFound(long num,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeInteger(num));
     @SuppressWarnings("unchecked") ArrayBuilderFactory<E, ?> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
     @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
@@ -304,10 +303,10 @@ public class RepliesTest {
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
-  @Theory
+  @Property
   public <E> void failsToParseArrayReplyIfSimpleStringReplyIsFound(
-      @ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+      @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeSimpleString(s));
     @SuppressWarnings("unchecked") ArrayBuilderFactory<E, ?> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
     @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
@@ -317,9 +316,9 @@ public class RepliesTest {
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
-  @Theory
-  public <E> void failsToParseArrayReplyIfBulkStringReplyIsFound(@ForAll byte[] bytes,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public <E> void failsToParseArrayReplyIfBulkStringReplyIsFound(byte[] bytes,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeBulkString(bytes));
     @SuppressWarnings("unchecked") ArrayBuilderFactory<E, ?> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
     @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
@@ -329,9 +328,9 @@ public class RepliesTest {
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
-  @Theory
+  @Property(trials = 10)
   public <E, T> void failsToParseArrayOfBulkStringsReplyIfArrayOfArraysReplyIsFound(
-      @ForAll(sampleSize = 10) byte[][][] arrays, @TestedOn(ints = {3, 5, 10, 100, 1000}) int bufferSize) {
+      byte[][][] arrays, @Only({"3", "5", "10", "100", "1000"}) int bufferSize) {
     assumeThat(arrays, arrayWithSize(greaterThan(0)));
     ByteBuffer src = ByteBuffer.wrap(encodeArrayOfArrays(arrays));
     @SuppressWarnings("unchecked") ArrayBuilderFactory<E, T> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
@@ -344,9 +343,9 @@ public class RepliesTest {
     verifyZeroInteractions(bulkStringBuilderFactory);
   }
 
-  @Theory
-  public void parsesScanReply(@ForAll(sampleSize = 10) @InRange(minLong = 0) long cursor,
-      @ForAll(sampleSize = 50) byte[][] elements, @TestedOn(ints = {3, 5, 10, 100, 1000}) int bufferSize) {
+  @Property(trials = 50)
+  public void parsesScanReply(@InRange(minLong = 0) long cursor,
+      byte[][] elements, @Only({"3", "5", "10", "100", "1000"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(encodeScanReply(cursor, elements));
     ScanResult<byte[][]> scanResult =
         parseReply(src, bufferSize, scanReply(array(byte[][]::new), new TestBulkStringBuilderFactory()),
@@ -356,9 +355,9 @@ public class RepliesTest {
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public <E> void parsesErrorScanReply(@ForAll @From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public <E> void parsesErrorScanReply(@From(Encoded.class) @Encoded.InCharset("US-ASCII") String s,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     @SuppressWarnings("unchecked") ArrayBuilderFactory<E, ?> arrayBuilderFactory = mock(ArrayBuilderFactory.class);
     @SuppressWarnings("unchecked") BulkStringBuilderFactory<?, E> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);

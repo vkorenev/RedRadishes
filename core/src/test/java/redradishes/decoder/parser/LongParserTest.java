@@ -1,10 +1,9 @@
 package redradishes.decoder.parser;
 
-import com.pholser.junit.quickcheck.ForAll;
+import com.pholser.junit.quickcheck.Property;
 import org.junit.Rule;
-import org.junit.contrib.theories.Theories;
-import org.junit.contrib.theories.Theory;
-import org.junit.contrib.theories.suppliers.TestedOn;
+import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
+import com.pholser.junit.quickcheck.generator.Only;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
@@ -21,15 +20,15 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static redradishes.decoder.parser.TestUtil.assertNoFailure;
 import static redradishes.decoder.parser.TestUtil.parseReply;
 
-@RunWith(Theories.class)
+@RunWith(JUnitQuickcheck.class)
 public class LongParserTest {
   @Rule
   public final MockitoRule mockitoRule = MockitoJUnit.rule();
   @Mock
   private CharsetDecoder charsetDecoder;
 
-  @Theory
-  public void parsesIntegers(@ForAll int num, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesIntegers(int num, @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap((num + "\r\n").getBytes(US_ASCII));
     assertThat(
         parseReply(src, bufferSize, LongParser.INTEGER_PARSER, Function.identity(), assertNoFailure(), charsetDecoder),
@@ -37,8 +36,8 @@ public class LongParserTest {
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public void parsesLongs(@ForAll long num, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parsesLongs(long num, @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap((num + "\r\n").getBytes(US_ASCII));
     assertThat(
         parseReply(src, bufferSize, LongParser.LONG_PARSER, Function.identity(), assertNoFailure(), charsetDecoder),

@@ -1,10 +1,9 @@
 package redradishes.decoder.parser;
 
-import com.pholser.junit.quickcheck.ForAll;
+import com.pholser.junit.quickcheck.Property;
 import org.junit.Rule;
-import org.junit.contrib.theories.Theories;
-import org.junit.contrib.theories.Theory;
-import org.junit.contrib.theories.suppliers.TestedOn;
+import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
+import com.pholser.junit.quickcheck.generator.Only;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
@@ -36,24 +35,24 @@ import static redradishes.decoder.parser.TestUtil.assertNoResult;
 import static redradishes.decoder.parser.TestUtil.parseReply;
 import static redradishes.hamcrest.ThrowableMessageMatcher.hasMessage;
 
-@RunWith(Theories.class)
+@RunWith(JUnitQuickcheck.class)
 public class BulkStringParserTest {
   @Rule
   public final MockitoRule mockitoRule = MockitoJUnit.rule();
   @Mock
   private CharsetDecoder charsetDecoder;
 
-  @Theory
-  public void parses(@ForAll byte[] bytes, @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) {
+  @Property
+  public void parses(byte[] bytes, @Only({"1", "2", "3", "5", "100"}) int bufferSize) {
     ByteBuffer src = ByteBuffer.wrap(appendCRLF(bytes));
     assertThat(parseReply(src, bufferSize, new BulkStringParser<>(bytes.length, new TestBulkStringBuilderFactory()),
         Function.identity(), assertNoFailure(), charsetDecoder), equalTo(bytes));
     verifyZeroInteractions(charsetDecoder);
   }
 
-  @Theory
-  public <B> void returnsFailureIfBulkStringBuilderThrowsException(@ForAll byte[] bytes,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) throws Exception {
+  @Property
+  public <B> void returnsFailureIfBulkStringBuilderThrowsException(byte[] bytes,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) throws Exception {
     @SuppressWarnings("unchecked") BulkStringBuilderFactory<B, ?> bulkStringBuilderFactory =
         mock(BulkStringBuilderFactory.class);
     RuntimeException e1 = new RuntimeException();
@@ -76,9 +75,9 @@ public class BulkStringParserTest {
     verifyNoMoreInteractions(bulkStringBuilderFactory);
   }
 
-  @Theory
-  public <B, R> void returnsFailureIfNotAllBytesAreConsumedInAppendLast(@ForAll byte[] bytes,
-      @TestedOn(ints = {1, 2, 3, 5, 100}) int bufferSize) throws Exception {
+  @Property
+  public <B, R> void returnsFailureIfNotAllBytesAreConsumedInAppendLast(byte[] bytes,
+      @Only({"1", "2", "3", "5", "100"}) int bufferSize) throws Exception {
     assumeThat(bytes.length, greaterThan(0));
     BulkStringBuilderFactory<B, R> bulkStringBuilderFactory = new BulkStringBuilderFactory<B, R>() {
       @Override
